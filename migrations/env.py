@@ -12,6 +12,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
+import app.modules.auth.models  # noqa: F401
 from app.core.config import settings
 from app.core.db import Base
 

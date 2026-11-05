@@ -27,6 +27,7 @@ from app.core.errors import (
     validation_exception_handler,
 )
 from app.core.logging import setup_logging
+from app.modules.auth.router import auth_router, me_router
 from app.modules.health.router import router as health_router
 
 
@@ -117,6 +118,8 @@ def create_app() -> FastAPI:
 
     # 4. Register Routers
     app.include_router(health_router)
+    app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(me_router, prefix="/api/v1")
 
     return app
 

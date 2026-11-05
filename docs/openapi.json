@@ -49,10 +49,334 @@
           }
         }
       }
+    },
+    "/api/v1/auth/otp/request": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Request Phone OTP Challenge",
+        "description": "Sends OTP verification code via SMS. Rate limited to 5 sends/hour with 60s delay.",
+        "operationId": "api_request_otp_api_v1_auth_otp_request_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OTPRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OTPRequestOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/otp/verify": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verify Phone OTP & Login",
+        "description": "Verifies the code, registers riders, and returns access & refresh tokens.",
+        "operationId": "api_verify_otp_api_v1_auth_otp_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OTPVerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/token/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Rotate Refresh Token",
+        "description": "Exchanges active refresh token for new pair. Revokes token family on replay.",
+        "operationId": "api_refresh_token_api_v1_auth_token_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout Current Session",
+        "description": "Revokes the active caller session and its associated refresh tokens.",
+        "operationId": "api_logout_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/sessions": {
+      "get": {
+        "tags": [
+          "Current User & Devices"
+        ],
+        "summary": "List Active User Sessions",
+        "description": "Lists all active login sessions and registered devices for the current rider.",
+        "operationId": "api_list_sessions_api_v1_me_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List Sessions Api V1 Me Sessions Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/sessions/{session_id}": {
+      "delete": {
+        "tags": [
+          "Current User & Devices"
+        ],
+        "summary": "Revoke Specific Session",
+        "description": "Remotely revokes a specific device session belonging to the current user.",
+        "operationId": "api_revoke_session_api_v1_me_sessions__session_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Api Revoke Session Api V1 Me Sessions  Session Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AuthTokenOut": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "Signed JWT access token (15 mins)"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token",
+            "description": "Rotating cryptographically secure refresh token (30 days)"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "description": "Token type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Access token expiration in seconds",
+            "default": 900
+          },
+          "account_status": {
+            "type": "string",
+            "title": "Account Status",
+            "description": "Current account state (e.g. pending_verification, active)"
+          },
+          "onboarding_required": {
+            "type": "boolean",
+            "title": "Onboarding Required",
+            "description": "True if rider has not completed initial profile setup"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "account_status",
+          "onboarding_required"
+        ],
+        "title": "AuthTokenOut",
+        "description": "Token response on successful login or refresh."
+      },
+      "DeviceIn": {
+        "properties": {
+          "platform": {
+            "type": "string",
+            "title": "Platform",
+            "description": "Platform identifier (android, ios, web)",
+            "default": "android"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable device model name",
+            "default": "Mobile Device"
+          },
+          "push_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Push Token",
+            "description": "FCM / APNS push notification token"
+          }
+        },
+        "type": "object",
+        "title": "DeviceIn",
+        "description": "Client device information."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
       "HealthResponse": {
         "properties": {
           "status": {
@@ -85,6 +409,217 @@
         ],
         "title": "HealthResponse",
         "description": "Health check response payload."
+      },
+      "LogoutOut": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message",
+            "default": "Successfully logged out"
+          }
+        },
+        "type": "object",
+        "title": "LogoutOut",
+        "description": "Logout confirmation payload."
+      },
+      "OTPRequestIn": {
+        "properties": {
+          "country_code": {
+            "type": "string",
+            "pattern": "^\\+[1-9]\\d{0,3}$",
+            "title": "Country Code",
+            "description": "E.164 country calling code (default +91 for India)",
+            "default": "+91"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 7,
+            "title": "Phone",
+            "description": "Phone number without country code or in full"
+          },
+          "device": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeviceIn"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Requesting device metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone"
+        ],
+        "title": "OTPRequestIn",
+        "description": "Phone OTP challenge request."
+      },
+      "OTPRequestOut": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Neutral status message",
+            "default": "If the phone number is valid, a verification code has been sent."
+          },
+          "resend_in_seconds": {
+            "type": "integer",
+            "title": "Resend In Seconds",
+            "description": "Minimum seconds before another OTP can be requested",
+            "default": 60
+          }
+        },
+        "type": "object",
+        "title": "OTPRequestOut",
+        "description": "Neutral OTP response to prevent user enumeration."
+      },
+      "OTPVerifyIn": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 7,
+            "title": "Phone",
+            "description": "Normalized or raw phone number"
+          },
+          "otp": {
+            "type": "string",
+            "maxLength": 8,
+            "minLength": 4,
+            "title": "Otp",
+            "description": "Verification code received"
+          },
+          "device": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeviceIn"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Device completing verification"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone",
+          "otp"
+        ],
+        "title": "OTPVerifyIn",
+        "description": "OTP verification payload."
+      },
+      "RefreshTokenIn": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token",
+            "description": "Active rotating refresh token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenIn",
+        "description": "Refresh token payload."
+      },
+      "SessionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "interface": {
+            "type": "string",
+            "title": "Interface"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "device_name": {
+            "type": "string",
+            "title": "Device Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_active_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Active At"
+          },
+          "is_current": {
+            "type": "boolean",
+            "title": "Is Current",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "interface",
+          "platform",
+          "device_name",
+          "created_at",
+          "last_active_at"
+        ],
+        "title": "SessionOut",
+        "description": "Redacted session and device metadata for device management."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

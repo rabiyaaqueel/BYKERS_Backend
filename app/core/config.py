@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     # Dev OTP testing support
     # DEV_FIXED_OTP will only work if ENV == 'dev' AND the phone is in ALLOWED_TEST_PHONES
     DEV_FIXED_OTP: str = "123456"
-    ALLOWED_TEST_PHONES: List[str] = [
+    ALLOWED_TEST_PHONES: Union[str, List[str]] = [
         "+919876543210",
         "+919876543211",
         "+919876543212",
@@ -48,9 +48,9 @@ class Settings(BaseSettings):
     ]
 
     # CORS origins: In dev defaults to allow all, or a specific list of domains
-    CORS_ORIGINS: List[str] = ["*"]
+    CORS_ORIGINS: Union[str, List[str]] = ["*"]
 
-    @field_validator("ALLOWED_TEST_PHONES", mode="before")
+    @field_validator("ALLOWED_TEST_PHONES")
     @classmethod
     def parse_test_phones(cls, v: Union[str, List[str]]) -> List[str]:
         """Convert comma-separated phone string to a list of clean phone numbers."""
@@ -58,7 +58,7 @@ class Settings(BaseSettings):
             return [phone.strip() for phone in v.split(",") if phone.strip()]
         return v
 
-    @field_validator("CORS_ORIGINS", mode="before")
+    @field_validator("CORS_ORIGINS")
     @classmethod
     def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         """Convert comma-separated origin string to a list of allowed origins."""

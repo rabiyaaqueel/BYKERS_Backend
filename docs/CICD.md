@@ -130,3 +130,4 @@ When you are ready to cut a new release:
    - The container app is updated to image tag `v0.1.0`.
    - Automated smoke tests probe `PROD_API_URL/api/v1/health`.
    - If smoke tests fail, the workflow immediately triggers an automated rollback to the previous container revision and reports the incident.
+

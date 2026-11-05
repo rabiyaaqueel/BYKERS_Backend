@@ -184,3 +184,4 @@ jobs:
             --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
             --revision-weight ${{ steps.pre_deploy.outputs.previous_revision }}=100
           echo "Rollback completed."
+

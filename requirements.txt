@@ -10,4 +10,9 @@ python-dotenv>=1.0.1
 httpx>=0.27.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
+pytest-cov>=5.0.0
 ruff>=0.4.0
+mypy>=1.10.0
+pip-audit>=2.7.0
+bandit>=1.7.0
+

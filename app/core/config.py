@@ -18,9 +18,7 @@ class Settings(BaseSettings):
 
     # Async PostgreSQL connection string
     # Must use postgresql+asyncpg:// for SQLAlchemy async engine
-    DATABASE_URL: str = (
-        "postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/gis_database"
-    )
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/gis_database"
 
     # JWT signing key (Keep secret in production!)
     SECRET_KEY: str = "dev-insecure-secret-key-change-in-production-min-32-chars"

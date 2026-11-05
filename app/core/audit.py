@@ -25,5 +25,9 @@ def record_audit_event(
     """Record an audit trail event."""
     audit_logger.info(
         "AUDIT: actor=%s action=%s resource=%s reason=%s request_id=%s",
-        actor, action, resource, reason, request_id
+        actor,
+        action,
+        resource,
+        reason,
+        request_id,
     )

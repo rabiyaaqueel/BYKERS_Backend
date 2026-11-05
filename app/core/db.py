@@ -44,6 +44,7 @@ AsyncSessionLocal = async_sessionmaker(
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy 2.0 database models in BYKERS."""
+
     pass
 
 

@@ -198,11 +198,13 @@ async def validation_exception_handler(
     errors = []
     for err in exc.errors():
         loc = " -> ".join(str(item) for item in err.get("loc", []))
-        errors.append({
-            "field": loc,
-            "message": err.get("msg", "Invalid input"),
-            "type": err.get("type", "value_error"),
-        })
+        errors.append(
+            {
+                "field": loc,
+                "message": err.get("msg", "Invalid input"),
+                "type": err.get("type", "value_error"),
+            }
+        )
 
     return format_error_response(
         code="VALIDATION_ERROR",
@@ -216,6 +218,7 @@ async def validation_exception_handler(
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all handler for unhandled internal exceptions to avoid leaking trace details."""
     import logging
+
     logger = logging.getLogger("bykers.server")
     req_id = get_request_id(request)
     logger.error("Unhandled server exception [request_id=%s]: %s", req_id, str(exc), exc_info=True)

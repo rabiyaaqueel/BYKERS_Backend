@@ -27,6 +27,7 @@ from enum import Enum
 
 class RoleCode(str, Enum):
     """The 14 authenticated role codes in BYKERS."""
+
     RL01_RIDER = "RL01"
     RL02_CLUB_OWNER = "RL02"
     RL03_CLUB_MODERATOR = "RL03"

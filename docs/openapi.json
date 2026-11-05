@@ -1,0 +1,91 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BYKERS Backend API",
+    "description": "Motorcycle community platform backend for riders in India.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Root Service Health",
+        "description": "Public endpoint to check overall backend and database health.",
+        "operationId": "get_root_health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "API v1 Service Health",
+        "description": "Public endpoint to check overall backend and database health under /api/v1.",
+        "operationId": "get_v1_health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Overall service status",
+            "default": "ok"
+          },
+          "env": {
+            "type": "string",
+            "title": "Env",
+            "description": "Environment (e.g., dev, test, staging, prod)"
+          },
+          "database": {
+            "type": "string",
+            "title": "Database",
+            "description": "Database connectivity status: 'up' or 'down'"
+          },
+          "postgis": {
+            "type": "string",
+            "title": "Postgis",
+            "description": "PostGIS extension version string or 'missing'"
+          }
+        },
+        "type": "object",
+        "required": [
+          "env",
+          "database",
+          "postgis"
+        ],
+        "title": "HealthResponse",
+        "description": "Health check response payload."
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+# Git and Environment secrets
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Python virtual environment and bytecode
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Testing and Linters
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+tests/
+
+# IDE and OS
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# CI and docs scratch
+.github/
+scratch/
+scratch_test.py

@@ -84,3 +84,4 @@ All API routes live under `/api/v1`. OpenAPI docs at `/docs`.
 - CORS: allow all origins in dev (the Flutter app and partner will call through an ngrok URL). Configurable list otherwise.
 - The partner reaches the API through an ngrok tunnel to port 8000. Middleware never fails because of the `ngrok-skip-browser-warning` header.
 - Provide `scripts/seed_dev.py` that creates dev data (only when `ENV=dev`): cities, interests, 3 test riders, 1 club owner, 1 moderator, 1 captain, 1 platform admin, 1 sample club. Print the test phone numbers.
+

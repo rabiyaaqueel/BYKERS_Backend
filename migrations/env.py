@@ -10,7 +10,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import settings
 from app.core.db import Base
@@ -22,8 +22,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Set the SQLAlchemy connection URL dynamically from our Pydantic settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Escape '%' as '%%' to prevent configparser interpolation errors with URL-encoded passwords
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
 
 # Model metadata for autogenerate support
 target_metadata = Base.metadata
@@ -34,7 +34,7 @@ def run_migrations_offline() -> None:
 
     Configures the context with just a URL and not an Engine.
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = settings.DATABASE_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -59,9 +59,8 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode using an async SQLAlchemy engine."""
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_async_engine(
+        settings.DATABASE_URL,
         poolclass=pool.NullPool,
     )
 
@@ -80,3 +79,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+

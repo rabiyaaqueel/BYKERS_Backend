@@ -27,6 +27,16 @@ logger = logging.getLogger("bykers.db")
 # Create the async SQLAlchemy engine
 # pool_pre_ping checks connections before handing them out
 # NullPool is used in test mode to prevent Event Loop is Closed errors across async tests
+# Determine active database URL based on environment
+active_db_url = settings.TEST_DATABASE_URL if settings.ENV == "test" else settings.DATABASE_URL
+
+# TEST SAFETY: refuse to run tests unless database name contains 'test'
+if settings.ENV == "test" and "test" not in active_db_url.lower():
+    raise RuntimeError(
+        f"TEST SAFETY REFUSAL: Database URL '{active_db_url}' does not contain 'test'. "
+        "Automated tests must never run against development or production databases!"
+    )
+
 engine_kwargs = {
     "echo": False,
     "connect_args": {"timeout": 2.0},
@@ -36,7 +46,7 @@ if settings.ENV == "test":
 else:
     engine_kwargs["pool_pre_ping"] = True
 
-engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)
+engine = create_async_engine(active_db_url, **engine_kwargs)
 
 # Async session factory
 AsyncSessionLocal = async_sessionmaker(

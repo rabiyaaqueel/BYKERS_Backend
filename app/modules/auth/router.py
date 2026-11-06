@@ -7,11 +7,16 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
-from app.core.dependencies import AuthenticatedUser, get_current_user
+from app.core.dependencies import (
+    ALL_INTERFACES,
+    AuthenticatedUser,
+    require_interface,
+)
 from app.core.errors import get_request_id
 from app.modules.auth.schemas import (
     AuthTokenOut,
     LogoutOut,
+    MeSummaryOut,
     OTPRequestIn,
     OTPRequestOut,
     OTPVerifyIn,
@@ -19,6 +24,7 @@ from app.modules.auth.schemas import (
     SessionOut,
 )
 from app.modules.auth.service import (
+    get_user_account_summary,
     list_user_sessions,
     logout_current_session,
     refresh_session_tokens,
@@ -86,11 +92,24 @@ async def api_refresh_token(
 )
 async def api_logout(
     request: Request,
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    current_user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
     db: AsyncSession = Depends(get_db),
 ) -> LogoutOut:
     request_id = get_request_id(request)
     return await logout_current_session(db, current_user, request_id=request_id)
+
+
+@me_router.get(
+    "",
+    response_model=MeSummaryOut,
+    summary="Get Account Summary",
+    description="Returns minimal account summary (id, status, onboarding_required, locale).",
+)
+async def api_get_me(
+    current_user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
+    db: AsyncSession = Depends(get_db),
+) -> MeSummaryOut:
+    return await get_user_account_summary(db, current_user)
 
 
 @me_router.get(
@@ -100,7 +119,7 @@ async def api_logout(
     description="Lists all active login sessions and registered devices for the current rider.",
 )
 async def api_list_sessions(
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    current_user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
     db: AsyncSession = Depends(get_db),
 ) -> List[SessionOut]:
     return await list_user_sessions(db, current_user)
@@ -114,7 +133,7 @@ async def api_list_sessions(
 async def api_revoke_session(
     session_id: uuid.UUID,
     request: Request,
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    current_user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     request_id = get_request_id(request)

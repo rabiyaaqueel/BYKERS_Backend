@@ -8,7 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.db import get_db
-from app.core.dependencies import AuthenticatedUser, get_current_user
+from app.core.dependencies import (
+    ALL_INTERFACES,
+    AuthenticatedUser,
+    require_interface,
+)
 from app.core.errors import NotFoundError
 from app.core.permissions import require
 from app.modules.authz import service
@@ -51,7 +55,7 @@ dev_router = APIRouter(prefix="/dev", tags=["Development Helpers"])
     description="Returns all active workspaces the rider is authorized for.",
 )
 async def api_list_workspaces(
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
     db: AsyncSession = Depends(get_db),
 ) -> List[WorkspaceOut]:
     return await service.list_workspaces(db=db, user=user)
@@ -65,7 +69,7 @@ async def api_list_workspaces(
 )
 async def api_switch_active_workspace(
     payload: ActiveWorkspaceIn,
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
     db: AsyncSession = Depends(get_db),
 ) -> ActiveWorkspaceOut:
     return await service.switch_active_workspace(db=db, user=user, payload=payload)
@@ -78,7 +82,7 @@ async def api_switch_active_workspace(
     description="Returns UI modules and authorized action codes. Contains no secrets.",
 )
 async def api_get_capabilities(
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
     db: AsyncSession = Depends(get_db),
 ) -> CapabilitiesOut:
     return await service.get_capabilities(db=db, user=user)
@@ -98,7 +102,8 @@ async def api_get_capabilities(
 )
 async def api_create_application(
     payload: ApplicationCreateIn,
-    user: AuthenticatedUser = Depends(require("application.create")),
+    user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
+    _perm: AuthenticatedUser = Depends(require("application.create")),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> ApplicationOut:
@@ -114,7 +119,8 @@ async def api_create_application(
     description="Returns all applications submitted by the authenticated rider.",
 )
 async def api_list_my_applications(
-    user: AuthenticatedUser = Depends(require("application.view_own")),
+    user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
+    _perm: AuthenticatedUser = Depends(require("application.view_own")),
     db: AsyncSession = Depends(get_db),
 ) -> List[ApplicationOut]:
     return await service.list_my_applications(db=db, user=user)
@@ -129,7 +135,8 @@ async def api_list_my_applications(
 async def api_decide_application(
     id: uuid.UUID = Path(..., description="Application ID"),
     payload: ApplicationDecisionIn = Body(...),
-    user: AuthenticatedUser = Depends(require("application.review")),
+    user: AuthenticatedUser = Depends(require_interface("staff_console")),
+    _perm: AuthenticatedUser = Depends(require("application.review")),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> ApplicationDecisionOut:
@@ -153,7 +160,10 @@ async def api_decide_application(
 async def api_create_invitation(
     id: uuid.UUID = Path(..., description="Organization ID"),
     payload: RoleInvitationCreateIn = Body(...),
-    user: AuthenticatedUser = Depends(require("invitation.create")),
+    user: AuthenticatedUser = Depends(
+        require_interface("organizer_portal", "partner_portal", "staff_console")
+    ),
+    _perm: AuthenticatedUser = Depends(require("invitation.create")),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> RoleInvitationOut:
@@ -170,7 +180,7 @@ async def api_create_invitation(
 )
 async def api_accept_invitation(
     token: str = Path(..., description="Raw invitation token"),
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> InvitationAcceptOut:
@@ -187,7 +197,10 @@ async def api_update_member_status(
     id: uuid.UUID = Path(..., description="Organization ID"),
     user_id: uuid.UUID = Path(..., description="Target User ID"),
     payload: MemberUpdateIn = Body(...),
-    admin: AuthenticatedUser = Depends(require("role.assign")),
+    admin: AuthenticatedUser = Depends(
+        require_interface("organizer_portal", "partner_portal", "staff_console")
+    ),
+    _perm: AuthenticatedUser = Depends(require("role.assign")),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> MemberOut:
@@ -210,7 +223,10 @@ async def api_update_member_status(
 async def api_revoke_member(
     id: uuid.UUID = Path(..., description="Organization ID"),
     user_id: uuid.UUID = Path(..., description="Target User ID"),
-    admin: AuthenticatedUser = Depends(require("role.assign")),
+    admin: AuthenticatedUser = Depends(
+        require_interface("organizer_portal", "partner_portal", "staff_console")
+    ),
+    _perm: AuthenticatedUser = Depends(require("role.assign")),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> MemberOut:
@@ -232,7 +248,8 @@ async def api_revoke_member(
 )
 async def api_list_audit_events(
     limit: int = Query(default=50, ge=1, le=100),
-    user: AuthenticatedUser = Depends(require("audit.read")),
+    user: AuthenticatedUser = Depends(require_interface("staff_console")),
+    _perm: AuthenticatedUser = Depends(require("audit.read")),
     db: AsyncSession = Depends(get_db),
 ) -> List[AuditEventOut]:
     return await service.list_audit_events(db=db, limit=limit)
@@ -251,7 +268,7 @@ async def api_list_audit_events(
 )
 async def api_dev_make_admin(
     payload: DevMakeAdminIn,
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> DevMakeAdminOut:

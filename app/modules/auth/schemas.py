@@ -119,3 +119,12 @@ class LogoutOut(BaseModel):
     """Logout confirmation payload."""
 
     message: str = Field(default="Successfully logged out", description="Status message")
+
+
+class MeSummaryOut(BaseModel):
+    """Minimal account summary view for the authenticated caller (Rule 6)."""
+
+    id: uuid.UUID = Field(..., description="User unique identifier")
+    status: str = Field(..., description="Account lifecycle status")
+    onboarding_required: bool = Field(..., description="True if rider onboarding is pending")
+    locale: str = Field(default="en-IN", description="User preferred locale")

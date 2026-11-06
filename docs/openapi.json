@@ -203,6 +203,33 @@
         ]
       }
     },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "Current User & Devices"
+        ],
+        "summary": "Get Account Summary",
+        "description": "Returns minimal account summary (id, status, onboarding_required, locale).",
+        "operationId": "api_get_me_api_v1_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeSummaryOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/me/sessions": {
       "get": {
         "tags": [
@@ -1578,6 +1605,40 @@
         "type": "object",
         "title": "LogoutOut",
         "description": "Logout confirmation payload."
+      },
+      "MeSummaryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "User unique identifier"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Account lifecycle status"
+          },
+          "onboarding_required": {
+            "type": "boolean",
+            "title": "Onboarding Required",
+            "description": "True if rider onboarding is pending"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale",
+            "description": "User preferred locale",
+            "default": "en-IN"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "onboarding_required"
+        ],
+        "title": "MeSummaryOut",
+        "description": "Minimal account summary view for the authenticated caller (Rule 6)."
       },
       "MemberOut": {
         "properties": {

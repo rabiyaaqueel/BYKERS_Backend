@@ -41,6 +41,7 @@ from app.modules.auth.models import (
 from app.modules.auth.schemas import (
     AuthTokenOut,
     LogoutOut,
+    MeSummaryOut,
     OTPRequestIn,
     OTPRequestOut,
     OTPVerifyIn,
@@ -108,7 +109,12 @@ async def request_otp(
             )
 
     # 2. Determine OTP code (Dev Fixed vs Random)
-    if settings.ENV == "dev" and phone_norm in settings.ALLOWED_TEST_PHONES:
+    otp_code: str
+    if (
+        settings.ENV == "dev"
+        and phone_norm in settings.ALLOWED_TEST_PHONES
+        and settings.DEV_FIXED_OTP
+    ):
         otp_code = settings.DEV_FIXED_OTP
         logger.info(
             "[DEV OTP] Generated fixed test code for %s: %s",
@@ -554,3 +560,25 @@ async def revoke_session_by_id(
 
     await db.commit()
     return {"message": "Session successfully revoked"}
+
+
+async def get_user_account_summary(
+    db: AsyncSession,
+    current_user: AuthenticatedUser,
+) -> MeSummaryOut:
+    """Returns minimal account summary (id, status, onboarding_required, locale)."""
+    stmt = select(User).where(User.id == current_user.user_id)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise NotFoundError("User not found", code="USER_NOT_FOUND")
+
+    onboarding_required = (
+        user.status == UserStatus.PENDING_VERIFICATION.value or user.adult_attested_at is None
+    )
+    return MeSummaryOut(
+        id=user.id,
+        status=user.status,
+        onboarding_required=onboarding_required,
+        locale=user.locale,
+    )

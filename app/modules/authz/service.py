@@ -144,6 +144,16 @@ async def list_workspaces(db: AsyncSession, user: AuthenticatedUser) -> List[Wor
         )
         mod_ids = PLATFORM_MODULES if ws_type == "staff" else CLUB_MODULES
 
+        # Filter by session interface (rider_app only sees personal workspace)
+        if user.session.interface == "rider_app":
+            continue
+        if user.session.interface == "organizer_portal" and ws_type != "club":
+            continue
+        if user.session.interface == "partner_portal" and ws_type != "business":
+            continue
+        if user.session.interface == "staff_console" and ws_type != "staff":
+            continue
+
         is_org_active = str(active_ws_id) == str(org_id)
         workspaces.append(
             WorkspaceOut(
@@ -169,11 +179,21 @@ async def switch_active_workspace(
     user: AuthenticatedUser,
     payload: ActiveWorkspaceIn,
 ) -> ActiveWorkspaceOut:
-    """Validates target workspace membership and activates it on the current session."""
+    """Validates target workspace membership and activates it on the current session.
+
+    Rule: Refuses any workspace that does not belong to the session's interface.
+    """
     target_id = payload.workspace_id
+    session_interface = user.session.interface
 
     # 1. Switching to Personal Workspace
     if target_id == user.user_id:
+        if session_interface != "rider_app":
+            raise ForbiddenError(
+                f"Interface '{session_interface}' cannot switch to personal rider workspace",
+                code="WORKSPACE_INTERFACE_MISMATCH",
+            )
+
         new_personal_ctx: Dict[str, Any] = {
             "workspace_id": str(user.user_id),
             "workspace_type": "personal",
@@ -191,6 +211,14 @@ async def switch_active_workspace(
             role_codes=[RoleCode.RL01_RIDER.value],
             capabilities=caps.actions,
             message="Switched to Personal Workspace",
+        )
+
+    # Rider mobile app sessions can NEVER switch to an organization/club workspace!
+    if session_interface == "rider_app":
+        raise ForbiddenError(
+            "Rider mobile app sessions are restricted to personal workspaces. "
+            "Organizational workspaces must be accessed from their designated web portals.",
+            code="WORKSPACE_INTERFACE_MISMATCH",
         )
 
     # 2. Switching to Organization / Club Workspace
@@ -216,6 +244,23 @@ async def switch_active_workspace(
 
     primary_mem, org, primary_role = rows[0]
     all_role_codes = [r.code for _, _, r in rows]
+
+    # Interface type validation
+    if session_interface == "organizer_portal" and org.type != OrganizationType.CLUB_ORG.value:
+        raise ForbiddenError(
+            f"Organizer portal sessions can only access club workspaces, not '{org.type}'",
+            code="WORKSPACE_INTERFACE_MISMATCH",
+        )
+    elif session_interface == "partner_portal" and org.type != OrganizationType.BUSINESS.value:
+        raise ForbiddenError(
+            f"Partner portal sessions can only access business workspaces, not '{org.type}'",
+            code="WORKSPACE_INTERFACE_MISMATCH",
+        )
+    elif session_interface == "staff_console" and org.type != OrganizationType.PLATFORM.value:
+        raise ForbiddenError(
+            f"Staff console sessions can only access platform staff workspaces, not '{org.type}'",
+            code="WORKSPACE_INTERFACE_MISMATCH",
+        )
 
     new_ctx: Dict[str, Any] = {
         "workspace_id": str(org.id),

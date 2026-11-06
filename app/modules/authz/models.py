@@ -379,6 +379,10 @@ class AuditEvent(Base):
     outcome: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     reason: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     request_id: Mapped[str] = mapped_column(String(100), default="", nullable=False)
+    ip_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    audit_metadata: Mapped[Dict[str, Any]] = mapped_column(
+        "metadata", JSONB, default=dict, nullable=False
+    )
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

@@ -4,9 +4,9 @@ This file loads settings and environment variables (from the `.env` file or the 
 It uses Pydantic Settings to automatically validate data types and provide safe defaults.
 """
 
-from typing import List, Union
+from typing import List, Optional, Union
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,9 +16,14 @@ class Settings(BaseSettings):
     # Environment name: 'dev', 'test', 'staging', or 'prod'
     ENV: str = "dev"
 
-    # Async PostgreSQL connection string
-    # Must use postgresql+asyncpg:// for SQLAlchemy async engine
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/gis_database"
+    # Async PostgreSQL connection string for development
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/bykers_dev"
+
+    # Async PostgreSQL connection string for automated tests
+    TEST_DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/bykers_test"
+
+    # Storage provider: 'local' (dev/test) or 'azure' (staging/prod)
+    STORAGE_PROVIDER: str = "local"
 
     # JWT signing key (Keep secret in production!)
     SECRET_KEY: str = "dev-insecure-secret-key-change-in-production-min-32-chars"
@@ -35,7 +40,8 @@ class Settings(BaseSettings):
 
     # Dev OTP testing support
     # DEV_FIXED_OTP will only work if ENV == 'dev' AND the phone is in ALLOWED_TEST_PHONES
-    DEV_FIXED_OTP: str = "123456"
+    # The application will refuse to start if DEV_FIXED_OTP is set when ENV != 'dev'
+    DEV_FIXED_OTP: Optional[str] = "123456"
     ALLOWED_TEST_PHONES: Union[str, List[str]] = [
         "+919876543210",
         "+919876543211",
@@ -47,6 +53,24 @@ class Settings(BaseSettings):
 
     # CORS origins: In dev defaults to allow all, or a specific list of domains
     CORS_ORIGINS: Union[str, List[str]] = ["*"]
+
+    @model_validator(mode="after")
+    def validate_environment_guards(self) -> "Settings":
+        """Safety rules from docs/CONTEXT.md:
+        1. Refuse to start if DEV_FIXED_OTP is set when ENV is not dev.
+        2. Refuse to start if STORAGE_PROVIDER is local in staging or prod.
+        """
+        if self.ENV not in ("dev", "test") and bool(self.DEV_FIXED_OTP):
+            raise ValueError(
+                f"Startup refused: DEV_FIXED_OTP must not be configured when ENV='{self.ENV}'"
+            )
+
+        if self.ENV in ("staging", "prod") and self.STORAGE_PROVIDER == "local":
+            raise ValueError(
+                f"Startup refused: STORAGE_PROVIDER cannot be 'local' in '{self.ENV}' environment"
+            )
+
+        return self
 
     @field_validator("ALLOWED_TEST_PHONES")
     @classmethod

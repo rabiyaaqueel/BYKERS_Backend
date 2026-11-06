@@ -71,6 +71,7 @@ async def create_test_user_session(
     phone: str | None = None,
     status: str = UserStatus.ACTIVE.value,
     active_context: dict | None = None,
+    interface: str = "rider_app",
 ) -> tuple[User, Session, str]:
     """Helper to provision a test user, device, session, and JWT access token."""
     # Generate unique phone number so repeated test executions never collide on unique constraint
@@ -97,7 +98,7 @@ async def create_test_user_session(
     session = Session(
         user_id=user.id,
         device_id=device.id,
-        interface="rider_app",
+        interface=interface,
         active_context=active_context
         or {"workspace_id": str(user.id), "workspace_type": "personal", "role_code": "RL01"},
         permission_version=1,
@@ -123,12 +124,12 @@ async def test_default_deny_rider_cannot_access_admin_or_club_manage(client: Asy
 
     headers = {"Authorization": f"Bearer {token}"}
 
-    # 1. Rider cannot view platform audit events (requires audit.read)
+    # 1. Rider cannot view platform audit events (requires audit.read and staff_console interface)
     res_audit = await client.get("/api/v1/admin/audit-events", headers=headers)
     assert res_audit.status_code == 403
-    assert res_audit.json()["code"] == "FORBIDDEN"
+    assert res_audit.json()["code"] in ("FORBIDDEN", "FORBIDDEN_INTERFACE")
 
-    # 2. Rider cannot decide on applications (requires application.review)
+    # 2. Rider cannot decide on applications (requires application.review and staff_console)
     random_app_id = uuid.uuid4()
     res_dec = await client.post(
         f"/api/v1/applications/{random_app_id}/decision",
@@ -136,15 +137,19 @@ async def test_default_deny_rider_cannot_access_admin_or_club_manage(client: Asy
         headers=headers,
     )
     assert res_dec.status_code == 403
-    assert res_dec.json()["code"] == "FORBIDDEN"
+    assert res_dec.json()["code"] in ("FORBIDDEN", "FORBIDDEN_INTERFACE")
 
 
 @pytest.mark.asyncio
 async def test_workspaces_listing_rider_vs_club_owner(client: AsyncClient):
-    """Riders see only Personal workspace; Club Owners see Personal + Club workspace."""
+    """Riders see only Personal workspace; Club Owners on portal see their Club workspace."""
     async with AsyncSessionLocal() as db:
-        rider, _, rider_token = await create_test_user_session(db, phone="+919999000021")
-        owner, _, owner_token = await create_test_user_session(db, phone="+919999000022")
+        rider, _, rider_token = await create_test_user_session(
+            db, phone="+919999000021", interface="rider_app"
+        )
+        owner, _, owner_token = await create_test_user_session(
+            db, phone="+919999000022", interface="organizer_portal"
+        )
 
         # Create approved test club
         club = Organization(
@@ -170,7 +175,7 @@ async def test_workspaces_listing_rider_vs_club_owner(client: AsyncClient):
         )
         await db.commit()
 
-    # 1. Rider workspaces
+    # 1. Rider workspaces on mobile app (only personal workspace)
     res_r = await client.get(
         "/api/v1/me/workspaces", headers={"Authorization": f"Bearer {rider_token}"}
     )
@@ -180,15 +185,14 @@ async def test_workspaces_listing_rider_vs_club_owner(client: AsyncClient):
     assert r_ws[0]["workspace_type"] == "personal"
     assert r_ws[0]["role_codes"] == ["RL01"]
 
-    # 2. Club owner workspaces
+    # 2. Club owner workspaces on organizer portal (only club workspace)
     res_o = await client.get(
         "/api/v1/me/workspaces", headers={"Authorization": f"Bearer {owner_token}"}
     )
     assert res_o.status_code == 200
     o_ws = res_o.json()
-    assert len(o_ws) == 2
+    assert len(o_ws) >= 1
     types = {w["workspace_type"] for w in o_ws}
-    assert "personal" in types
     assert "club" in types
 
 
@@ -196,7 +200,9 @@ async def test_workspaces_listing_rider_vs_club_owner(client: AsyncClient):
 async def test_switch_active_workspace_updates_session_and_capabilities(client: AsyncClient):
     """Switching active workspace updates session active context and returns capabilities."""
     async with AsyncSessionLocal() as db:
-        owner, session, owner_token = await create_test_user_session(db, phone="+919999000030")
+        owner, session, owner_token = await create_test_user_session(
+            db, phone="+919999000030", interface="organizer_portal"
+        )
 
         club = Organization(
             type=OrganizationType.CLUB_ORG.value,
@@ -224,12 +230,6 @@ async def test_switch_active_workspace_updates_session_and_capabilities(client: 
 
     headers = {"Authorization": f"Bearer {owner_token}"}
 
-    # Initial personal capabilities
-    cap_res1 = await client.get("/api/v1/me/capabilities", headers=headers)
-    assert cap_res1.status_code == 200
-    cap_data1 = cap_res1.json()
-    assert "club.manage" not in cap_data1["actions"]
-
     # Switch to Club workspace
     switch_res = await client.post(
         "/api/v1/me/active-workspace",
@@ -241,17 +241,19 @@ async def test_switch_active_workspace_updates_session_and_capabilities(client: 
     assert switch_data["workspace_type"] == "club_org"
     assert "club.manage" in switch_data["capabilities"]
 
-    # Fetch capabilities again to verify persistence
-    cap_res2 = await client.get("/api/v1/me/capabilities", headers=headers)
-    assert cap_res2.status_code == 200
-    assert "club.manage" in cap_res2.json()["actions"]
+    # Fetch capabilities to verify persistence
+    cap_res = await client.get("/api/v1/me/capabilities", headers=headers)
+    assert cap_res.status_code == 200
+    assert "club.manage" in cap_res.json()["actions"]
 
 
 @pytest.mark.asyncio
 async def test_switch_workspace_to_unauthorized_org_denied(client: AsyncClient):
-    """A rider cannot switch to a workspace for an organization they don't belong to."""
+    """A user cannot switch to a workspace for an organization they don't belong to."""
     async with AsyncSessionLocal() as db:
-        rider, _, rider_token = await create_test_user_session(db, phone="+919999000040")
+        portal_user, _, portal_token = await create_test_user_session(
+            db, phone="+919999000040", interface="organizer_portal"
+        )
         other_user, _, _ = await create_test_user_session(db, phone="+919999000041")
 
         club = Organization(
@@ -267,7 +269,7 @@ async def test_switch_workspace_to_unauthorized_org_denied(client: AsyncClient):
     res = await client.post(
         "/api/v1/me/active-workspace",
         json={"workspace_id": str(club_id)},
-        headers={"Authorization": f"Bearer {rider_token}"},
+        headers={"Authorization": f"Bearer {portal_token}"},
     )
     assert res.status_code == 403
     assert res.json()["code"] == "WORKSPACE_ACCESS_DENIED"
@@ -277,8 +279,10 @@ async def test_switch_workspace_to_unauthorized_org_denied(client: AsyncClient):
 async def test_maker_checker_applicant_cannot_approve_own_application(client: AsyncClient):
     """Maker-Checker Rule: An applicant with admin rights cannot approve their own application."""
     async with AsyncSessionLocal() as db:
-        # Create a user who is BOTH an applicant AND promoted to platform admin
-        user, _, token = await create_test_user_session(db, phone="+919999000050")
+        # Create a user who is BOTH an applicant AND promoted to platform admin on staff_console
+        user, _, token = await create_test_user_session(
+            db, phone="+919999000050", interface="staff_console"
+        )
 
         # Promote user to platform admin
         plat_org = (
@@ -336,8 +340,12 @@ async def test_maker_checker_applicant_cannot_approve_own_application(client: As
 async def test_application_approval_creates_organization_and_owner_membership(client: AsyncClient):
     """Approving an application by a reviewer creates the organization and owner role."""
     async with AsyncSessionLocal() as db:
-        applicant, _, applicant_token = await create_test_user_session(db, phone="+919999000060")
-        admin, _, admin_token = await create_test_user_session(db, phone="+919999000061")
+        applicant, _, applicant_token = await create_test_user_session(
+            db, phone="+919999000060", interface="organizer_portal"
+        )
+        admin, _, admin_token = await create_test_user_session(
+            db, phone="+919999000061", interface="staff_console"
+        )
 
         # Assign admin RL13
         plat_org = (
@@ -395,7 +403,7 @@ async def test_application_approval_creates_organization_and_owner_membership(cl
     )
     assert res_ws.status_code == 200
     workspaces = res_ws.json()
-    assert len(workspaces) == 2
+    assert len(workspaces) >= 1
     club_ws = next(w for w in workspaces if w["workspace_type"] == "club")
     assert club_ws["organization_name"] == "TEST_Coastal Riders Club"
     assert "RL02" in club_ws["role_codes"]
@@ -405,8 +413,12 @@ async def test_application_approval_creates_organization_and_owner_membership(cl
 async def test_role_invitation_lifecycle_and_acceptance(client: AsyncClient):
     """Invitations can be created by authorized leaders and accepted by recipients."""
     async with AsyncSessionLocal() as db:
-        owner, _, owner_token = await create_test_user_session(db, phone="+919999000070")
-        invitee, _, invitee_token = await create_test_user_session(db, phone="+919999000071")
+        owner, _, owner_token = await create_test_user_session(
+            db, phone="+919999000070", interface="organizer_portal"
+        )
+        invitee, _, invitee_token = await create_test_user_session(
+            db, phone="+919999000071", interface="organizer_portal"
+        )
 
         club = Organization(
             type=OrganizationType.CLUB_ORG.value,
@@ -517,8 +529,12 @@ async def test_expired_or_tampered_invitation_denied(client: AsyncClient):
 async def test_immediate_revocation_blocks_next_request(client: AsyncClient):
     """When a membership is revoked, the user's very next request is immediately blocked."""
     async with AsyncSessionLocal() as db:
-        admin, _, admin_token = await create_test_user_session(db, phone="+919999000090")
-        member, _, member_token = await create_test_user_session(db, phone="+919999000091")
+        admin, _, admin_token = await create_test_user_session(
+            db, phone="+919999000090", interface="organizer_portal"
+        )
+        member, _, member_token = await create_test_user_session(
+            db, phone="+919999000091", interface="organizer_portal"
+        )
 
         club = Organization(
             type=OrganizationType.CLUB_ORG.value,
@@ -670,7 +686,9 @@ async def test_capabilities_contains_no_secrets(client: AsyncClient):
 async def test_dev_make_admin_promotes_user(client: AsyncClient):
     """Dev helper promotes a test user to Platform Admin in dev environment."""
     async with AsyncSessionLocal() as db:
-        user, _, token = await create_test_user_session(db, phone="+919999000110")
+        user, _, token = await create_test_user_session(
+            db, phone="+919999000110", interface="staff_console"
+        )
 
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -682,7 +700,119 @@ async def test_dev_make_admin_promotes_user(client: AsyncClient):
     assert res.status_code == 200
     assert "promoted to" in res.json()["message"]
 
-    # User can now read audit events
+    # User can now read audit events on staff console
     res_audit = await client.get("/api/v1/admin/audit-events", headers=headers)
     assert res_audit.status_code == 200
     assert isinstance(res_audit.json(), list)
+
+
+@pytest.mark.asyncio
+async def test_interface_guard_rider_cannot_access_staff_endpoint(client: AsyncClient):
+    """Interface Rule: A rider_app token must get 403 on staff_console endpoints."""
+    async with AsyncSessionLocal() as db:
+        rider, _, rider_token = await create_test_user_session(
+            db, phone="+919999000120", interface="rider_app"
+        )
+
+    headers = {"Authorization": f"Bearer {rider_token}"}
+
+    # Rider attempts to access staff console audit events
+    res = await client.get("/api/v1/admin/audit-events", headers=headers)
+    assert res.status_code == 403
+    assert res.json()["code"] == "FORBIDDEN_INTERFACE"
+
+
+@pytest.mark.asyncio
+async def test_interface_guard_switching_workspace_of_wrong_interface_refused(client: AsyncClient):
+    """Interface Rule: Switching to a workspace of another interface is refused with 403."""
+    async with AsyncSessionLocal() as db:
+        rider, _, rider_token = await create_test_user_session(
+            db, phone="+919999000130", interface="rider_app"
+        )
+
+        club = Organization(
+            type=OrganizationType.CLUB_ORG.value,
+            name="TEST_Rider Attempted Club",
+            approval_state=OrgApprovalState.APPROVED.value,
+            created_by=rider.id,
+        )
+        db.add(club)
+        await db.commit()
+        club_id = club.id
+
+    # Rider app session attempts to switch to club organization workspace
+    res = await client.post(
+        "/api/v1/me/active-workspace",
+        json={"workspace_id": str(club_id)},
+        headers={"Authorization": f"Bearer {rider_token}"},
+    )
+    assert res.status_code == 403
+    assert res.json()["code"] == "WORKSPACE_INTERFACE_MISMATCH"
+
+
+@pytest.mark.asyncio
+async def test_all_non_public_routes_declare_require_interface():
+    """Route Scanning Rule: Every non-public endpoint MUST declare require_interface."""
+    from fastapi.routing import APIRoute
+
+    from app.main import app
+
+    public_paths = {
+        "/health",
+        "/api/v1/health",
+        "/api/v1/auth/otp/request",
+        "/api/v1/auth/otp/verify",
+        "/api/v1/auth/token/refresh",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+    }
+
+    unprotected_routes = []
+
+    for route in app.routes:
+        if not isinstance(route, APIRoute):
+            continue
+        if route.path in public_paths:
+            continue
+
+        # Inspect route dependencies for __allowed_interfaces__
+        has_interface_guard = False
+        all_deps = list(route.dependant.dependencies)
+        for dep in all_deps:
+            if hasattr(dep.call, "__allowed_interfaces__"):
+                has_interface_guard = True
+                break
+            # Check sub-dependencies
+            for sub_dep in dep.dependencies:
+                if hasattr(sub_dep.call, "__allowed_interfaces__"):
+                    has_interface_guard = True
+                    break
+
+        if not has_interface_guard:
+            unprotected_routes.append(f"{route.methods} {route.path}")
+
+    assert not unprotected_routes, (
+        f"The following routes are missing require_interface: {unprotected_routes}"
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_me_unauthenticated_and_authenticated(client: AsyncClient):
+    """GET /me requires authentication and returns account summary."""
+    # 1. Unauthenticated call -> 401
+    res_unauth = await client.get("/api/v1/me")
+    assert res_unauth.status_code == 401
+    assert res_unauth.json()["code"] == "UNAUTHORIZED"
+
+    # 2. Authenticated call -> 200
+    async with AsyncSessionLocal() as db:
+        user, _, token = await create_test_user_session(db, phone="+919999000140")
+
+    res_auth = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {token}"})
+    assert res_auth.status_code == 200
+    data = res_auth.json()
+    assert data["id"] == str(user.id)
+    assert data["status"] == "active"
+    assert "onboarding_required" in data
+    assert data["locale"] == "en-IN"

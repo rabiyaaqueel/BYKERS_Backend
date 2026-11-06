@@ -90,17 +90,31 @@ async def can(
     action: str,
     resource: Optional[Any] = None,
     context: Optional[Dict[str, Any]] = None,
+    allowed_interfaces: Optional[Tuple[str, ...]] = None,
 ) -> Tuple[bool, str]:
     """Evaluates whether the user can perform the specified action in their active context.
 
     Default: DENY.
+    Evaluation order:
+    1. Authenticate session & check account status
+    2. Check interface compatibility (session.interface in allowed_interfaces)
+    3. Load active context
+    4. Check for Platform Administrator / Super Admin privileges (RL13, RL14)
+    5. Evaluate role and granted permissions within active context
     """
-    # 1. Authenticate session & 2. Check account status
+    # 1. Authenticate session & Check account status
     if not user or not user.user:
         return False, "Unauthenticated session"
 
     if user.user.status in (UserStatus.SUSPENDED.value, UserStatus.DELETED.value):
         return False, "User account is suspended or deleted"
+
+    # 2. Check interface compatibility
+    if allowed_interfaces and user.session.interface not in allowed_interfaces:
+        return (
+            False,
+            f"Interface '{user.session.interface}' is not permitted to perform action '{action}'",
+        )
 
     # 3. Load active context
     session_ctx = user.session.active_context or {}
@@ -209,6 +223,7 @@ async def can(
 def require(
     permission_code: str,
     resource_loader: Optional[Callable[..., Any]] = None,
+    allowed_interfaces: Optional[Tuple[str, ...]] = None,
 ) -> Callable:
     """FastAPI dependency factory enforcing that the authenticated user possesses the permission."""
 
@@ -220,7 +235,13 @@ def require(
         if resource_loader:
             resource = await resource_loader(db=db, user=user)
 
-        allowed, reason = await can(db=db, user=user, action=permission_code, resource=resource)
+        allowed, reason = await can(
+            db=db,
+            user=user,
+            action=permission_code,
+            resource=resource,
+            allowed_interfaces=allowed_interfaces,
+        )
 
         if not allowed:
             logger.warning(
@@ -238,4 +259,7 @@ def require(
 
         return user
 
+    if allowed_interfaces:
+        setattr(_permission_dependency, "__allowed_interfaces__", set(allowed_interfaces))
+    setattr(_permission_dependency, "__permission_code__", permission_code)
     return _permission_dependency

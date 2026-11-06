@@ -10,7 +10,8 @@ Every protected request:
 
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict
+from enum import Enum
+from typing import Any, Callable, Dict, Set
 
 import jwt
 from fastapi import Depends, Request
@@ -20,9 +21,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.db import get_db
-from app.core.errors import UnauthorizedError
+from app.core.errors import ForbiddenError, UnauthorizedError
 from app.core.security import decode_access_token
 from app.modules.auth.models import Session, User, UserStatus
+
+
+class AppInterface(str, Enum):
+    """The four distinct application interfaces in BYKERS."""
+
+    RIDER_APP = "rider_app"
+    ORGANIZER_PORTAL = "organizer_portal"
+    PARTNER_PORTAL = "partner_portal"
+    STAFF_CONSOLE = "staff_console"
+
+
+ALL_INTERFACES: Set[str] = {
+    AppInterface.RIDER_APP.value,
+    AppInterface.ORGANIZER_PORTAL.value,
+    AppInterface.PARTNER_PORTAL.value,
+    AppInterface.STAFF_CONSOLE.value,
+}
 
 # Auto-error False so we can return standard Rule 4 errors instead of default FastAPI 403
 security_scheme = HTTPBearer(auto_error=False)
@@ -99,3 +117,30 @@ async def get_current_user(
         raise UnauthorizedError("Account is not active", code="ACCOUNT_SUSPENDED")
 
     return AuthenticatedUser(user=user, session=session, token_payload=payload)
+
+
+def require_interface(*allowed_interfaces: str) -> Callable[..., Any]:
+    """FastAPI dependency enforcing that the caller session belongs to an allowed interface.
+
+    Task C addition:
+    - Every token and session belongs to exactly one interface (rider_app, organizer_portal,
+      partner_portal, staff_console).
+    - Wrong interface returns 403 Forbidden.
+    """
+    allowed_set: Set[str] = set(allowed_interfaces)
+
+    async def _enforce_interface(
+        current_user: AuthenticatedUser = Depends(get_current_user),
+    ) -> AuthenticatedUser:
+        session_interface = current_user.session.interface
+        if session_interface not in allowed_set:
+            raise ForbiddenError(
+                f"Interface '{session_interface}' is not permitted to access this endpoint. "
+                f"Permitted interfaces: {sorted(list(allowed_set))}",
+                code="FORBIDDEN_INTERFACE",
+            )
+        return current_user
+
+    # Attach metadata so reflection/test scans can verify interface declarations
+    setattr(_enforce_interface, "__allowed_interfaces__", allowed_set)
+    return _enforce_interface

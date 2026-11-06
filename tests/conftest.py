@@ -14,6 +14,13 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.core.config import settings
+
+# Test database safety verification
+if "test" not in settings.TEST_DATABASE_URL.lower():
+    raise RuntimeError(
+        f"TEST SAFETY REFUSAL: URL '{settings.TEST_DATABASE_URL}' does not contain 'test'."
+    )
+
 from app.core.db import engine
 from app.main import app
 

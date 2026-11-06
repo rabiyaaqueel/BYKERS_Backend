@@ -10,10 +10,20 @@ from pydantic import BaseModel, ConfigDict, Field
 class DeviceIn(BaseModel):
     """Client device information."""
 
-    platform: str = Field(default="android", description="Platform identifier (android, ios, web)")
-    name: str = Field(default="Mobile Device", description="Human-readable device model name")
+    platform: str = Field(
+        default="android",
+        description="Platform identifier (android, ios, web)",
+        examples=["android"],
+    )
+    name: str = Field(
+        default="Mobile Device",
+        description="Human-readable device model name",
+        examples=["Pixel 8"],
+    )
     push_token: Optional[str] = Field(
-        default=None, description="FCM / APNS push notification token"
+        default=None,
+        description="FCM / APNS push notification token",
+        examples=["sample_push_token_123"],
     )
 
 
@@ -24,12 +34,14 @@ class OTPRequestIn(BaseModel):
         default="+91",
         pattern=r"^\+[1-9]\d{0,3}$",
         description="E.164 country calling code (default +91 for India)",
+        examples=["+91"],
     )
     phone: str = Field(
         ...,
         min_length=7,
         max_length=15,
         description="Phone number without country code or in full",
+        examples=["9876543210"],
     )
     device: Optional[DeviceIn] = Field(default=None, description="Requesting device metadata")
 
@@ -50,9 +62,19 @@ class OTPVerifyIn(BaseModel):
     """OTP verification payload."""
 
     phone: str = Field(
-        ..., min_length=7, max_length=20, description="Normalized or raw phone number"
+        ...,
+        min_length=7,
+        max_length=20,
+        description="Normalized or raw phone number",
+        examples=["9876543210"],
     )
-    otp: str = Field(..., min_length=4, max_length=8, description="Verification code received")
+    otp: str = Field(
+        ...,
+        min_length=4,
+        max_length=8,
+        description="Verification code received (use 123456 in dev mode)",
+        examples=["123456"],
+    )
     device: Optional[DeviceIn] = Field(default=None, description="Device completing verification")
 
 

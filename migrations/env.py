@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import app.modules.auth.models  # noqa: F401
 from app.core.config import settings
 from app.core.db import Base
+import app.modules.auth.models  # noqa: F401
 
 # Alembic Config object
 config = context.config

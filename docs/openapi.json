@@ -339,13 +339,19 @@
             "type": "string",
             "title": "Platform",
             "description": "Platform identifier (android, ios, web)",
-            "default": "android"
+            "default": "android",
+            "examples": [
+              "android"
+            ]
           },
           "name": {
             "type": "string",
             "title": "Name",
             "description": "Human-readable device model name",
-            "default": "Mobile Device"
+            "default": "Mobile Device",
+            "examples": [
+              "Pixel 8"
+            ]
           },
           "push_token": {
             "anyOf": [
@@ -357,7 +363,10 @@
               }
             ],
             "title": "Push Token",
-            "description": "FCM / APNS push notification token"
+            "description": "FCM / APNS push notification token",
+            "examples": [
+              "sample_push_token_123"
+            ]
           }
         },
         "type": "object",
@@ -430,14 +439,20 @@
             "pattern": "^\\+[1-9]\\d{0,3}$",
             "title": "Country Code",
             "description": "E.164 country calling code (default +91 for India)",
-            "default": "+91"
+            "default": "+91",
+            "examples": [
+              "+91"
+            ]
           },
           "phone": {
             "type": "string",
             "maxLength": 15,
             "minLength": 7,
             "title": "Phone",
-            "description": "Phone number without country code or in full"
+            "description": "Phone number without country code or in full",
+            "examples": [
+              "9876543210"
+            ]
           },
           "device": {
             "anyOf": [
@@ -484,14 +499,20 @@
             "maxLength": 20,
             "minLength": 7,
             "title": "Phone",
-            "description": "Normalized or raw phone number"
+            "description": "Normalized or raw phone number",
+            "examples": [
+              "9876543210"
+            ]
           },
           "otp": {
             "type": "string",
             "maxLength": 8,
             "minLength": 4,
             "title": "Otp",
-            "description": "Verification code received"
+            "description": "Verification code received (use 123456 in dev mode)",
+            "examples": [
+              "123456"
+            ]
           },
           "device": {
             "anyOf": [

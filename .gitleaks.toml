@@ -1,0 +1,17 @@
+[allowlist]
+description = "Allowlist for development dummy secrets, test keys, and workflow examples"
+paths = [
+    '''.env.example''',
+    '''docker-compose.yml''',
+    '''.github/workflows/.*''',
+    '''tests/.*''',
+    '''app/core/config.py''',
+    '''scripts/.*'''
+]
+regexes = [
+    '''ci-testing-secret-key.*''',
+    '''local-dev-secret-key.*''',
+    '''dev-insecure-secret-key.*''',
+    '''dev-secret-key.*''',
+    '''postgrespassword''',
+]

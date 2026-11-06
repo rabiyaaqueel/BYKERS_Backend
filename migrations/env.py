@@ -12,6 +12,9 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
+import app.modules.auth.models  # noqa: F401
+import app.modules.authz.models  # noqa: F401
+import app.modules.registry.models  # noqa: F401
 from app.core.config import settings
 from app.core.db import Base
 
@@ -79,4 +82,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

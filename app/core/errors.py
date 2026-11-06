@@ -42,10 +42,11 @@ class UnauthorizedError(AppError):
     def __init__(
         self,
         message: str = "Authentication required",
+        code: str = "UNAUTHORIZED",
         details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
-            code="UNAUTHORIZED",
+            code=code,
             message=message,
             status_code=401,
             details=details,
@@ -58,10 +59,11 @@ class ForbiddenError(AppError):
     def __init__(
         self,
         message: str = "Access denied",
+        code: str = "FORBIDDEN",
         details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
-            code="FORBIDDEN",
+            code=code,
             message=message,
             status_code=403,
             details=details,
@@ -74,10 +76,11 @@ class NotFoundError(AppError):
     def __init__(
         self,
         message: str = "Resource not found",
+        code: str = "NOT_FOUND",
         details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
-            code="NOT_FOUND",
+            code=code,
             message=message,
             status_code=404,
             details=details,
@@ -90,10 +93,11 @@ class ConflictError(AppError):
     def __init__(
         self,
         message: str = "Conflict with current state",
+        code: str = "CONFLICT",
         details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
-            code="CONFLICT",
+            code=code,
             message=message,
             status_code=409,
             details=details,
@@ -106,10 +110,11 @@ class ValidationError(AppError):
     def __init__(
         self,
         message: str = "Validation failed",
+        code: str = "VALIDATION_ERROR",
         details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
-            code="VALIDATION_ERROR",
+            code=code,
             message=message,
             status_code=422,
             details=details,
@@ -122,10 +127,11 @@ class RateLimitError(AppError):
     def __init__(
         self,
         message: str = "Too many requests",
+        code: str = "RATE_LIMITED",
         details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
-            code="RATE_LIMITED",
+            code=code,
             message=message,
             status_code=429,
             details=details,
@@ -198,11 +204,13 @@ async def validation_exception_handler(
     errors = []
     for err in exc.errors():
         loc = " -> ".join(str(item) for item in err.get("loc", []))
-        errors.append({
-            "field": loc,
-            "message": err.get("msg", "Invalid input"),
-            "type": err.get("type", "value_error"),
-        })
+        errors.append(
+            {
+                "field": loc,
+                "message": err.get("msg", "Invalid input"),
+                "type": err.get("type", "value_error"),
+            }
+        )
 
     return format_error_response(
         code="VALIDATION_ERROR",
@@ -216,6 +224,7 @@ async def validation_exception_handler(
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all handler for unhandled internal exceptions to avoid leaking trace details."""
     import logging
+
     logger = logging.getLogger("bykers.server")
     req_id = get_request_id(request)
     logger.error("Unhandled server exception [request_id=%s]: %s", req_id, str(exc), exc_info=True)

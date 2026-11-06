@@ -1,0 +1,187 @@
+name: CD Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build & Push Container Image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging (Azure Container Apps)
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_TARGET != ''
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Python for Database Migrations
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Run Backward-Compatible Database Migrations (Expand-First)
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          pip install -r requirements.txt
+          alembic upgrade head
+
+      - name: Deploy Image to Azure Container Apps (Staging)
+        run: |
+          IMAGE_URI="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          az containerapp update \
+            --name ${{ vars.STAGING_CONTAINER_APP_NAME }} \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --image $IMAGE_URI
+
+      - name: Staging Smoke Tests (Health Check)
+        env:
+          STAGING_URL: ${{ vars.STAGING_API_URL }}
+        run: |
+          echo "Verifying /api/v1/health on $STAGING_URL..."
+          curl --fail --retry 5 --retry-delay 5 "$STAGING_URL/api/v1/health"
+
+      - name: Staging Smoke Test (Sign-In Probe)
+        env:
+          STAGING_URL: ${{ vars.STAGING_API_URL }}
+        run: |
+          echo "Verifying unauthenticated boundary and health..."
+          # Unauthenticated calls to non-public endpoints must return 401
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$STAGING_URL/api/v1/me/sessions")
+          if [ "$HTTP_STATUS" != "401" ]; then
+            echo "Expected 401 for unauthenticated request, got $HTTP_STATUS"
+            exit 1
+          fi
+
+  deploy-production:
+    name: Deploy to Production (Azure Container Apps)
+    needs: build-and-push
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PROD_API_URL }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Record Current Active Revision for Rollback
+        id: pre_deploy
+        run: |
+          CURRENT_REV=$(az containerapp revision list \
+            --name ${{ vars.PROD_CONTAINER_APP_NAME }} \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --query "[?properties.active].name" -o tsv | head -n 1)
+          echo "previous_revision=$CURRENT_REV" >> $GITHUB_OUTPUT
+
+      - name: Setup Python for Database Migrations
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Run Backward-Compatible Database Migrations (Expand-First)
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          pip install -r requirements.txt
+          alembic upgrade head
+
+      - name: Deploy Image to Azure Container Apps (Production)
+        run: |
+          IMAGE_URI="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}"
+          az containerapp update \
+            --name ${{ vars.PROD_CONTAINER_APP_NAME }} \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --image $IMAGE_URI
+
+      - name: Production Smoke Tests (Health Check)
+        id: smoke_test
+        env:
+          PROD_URL: ${{ vars.PROD_API_URL }}
+        run: |
+          echo "Verifying /api/v1/health on $PROD_URL..."
+          curl --fail --retry 6 --retry-delay 5 "$PROD_URL/api/v1/health"
+
+      - name: Automatic Rollback on Health Check Failure
+        if: failure() && steps.smoke_test.outcome == 'failure' && steps.pre_deploy.outputs.previous_revision != ''
+        run: |
+          echo "Health check failed! Rolling back to revision: ${{ steps.pre_deploy.outputs.previous_revision }}"
+          az containerapp revision activate \
+            --name ${{ vars.PROD_CONTAINER_APP_NAME }} \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --revision ${{ steps.pre_deploy.outputs.previous_revision }}
+          az containerapp ingress traffic set \
+            --name ${{ vars.PROD_CONTAINER_APP_NAME }} \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --revision-weight ${{ steps.pre_deploy.outputs.previous_revision }}=100
+          echo "Rollback completed."
+

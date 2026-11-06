@@ -1,0 +1,3008 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BYKERS Backend API",
+    "description": "Motorcycle community platform backend for riders in India.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Root Service Health",
+        "description": "Public endpoint to check overall backend and database health.",
+        "operationId": "get_root_health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "API v1 Service Health",
+        "description": "Public endpoint to check overall backend and database health under /api/v1.",
+        "operationId": "get_v1_health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/otp/request": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Request Phone OTP Challenge",
+        "description": "Sends OTP verification code via SMS. Rate limited to 5 sends/hour with 60s delay.",
+        "operationId": "api_request_otp_api_v1_auth_otp_request_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OTPRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OTPRequestOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/otp/verify": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verify Phone OTP & Login",
+        "description": "Verifies the code, registers riders, and returns access & refresh tokens.",
+        "operationId": "api_verify_otp_api_v1_auth_otp_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OTPVerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/token/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Rotate Refresh Token",
+        "description": "Exchanges active refresh token for new pair. Revokes token family on replay.",
+        "operationId": "api_refresh_token_api_v1_auth_token_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout Current Session",
+        "description": "Revokes the active caller session and its associated refresh tokens.",
+        "operationId": "api_logout_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "Current User & Devices"
+        ],
+        "summary": "Get Account Summary",
+        "description": "Returns minimal account summary (id, status, onboarding_required, locale).",
+        "operationId": "api_get_me_api_v1_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeSummaryOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/sessions": {
+      "get": {
+        "tags": [
+          "Current User & Devices"
+        ],
+        "summary": "List Active User Sessions",
+        "description": "Lists all active login sessions and registered devices for the current rider.",
+        "operationId": "api_list_sessions_api_v1_me_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List Sessions Api V1 Me Sessions Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/sessions/{session_id}": {
+      "delete": {
+        "tags": [
+          "Current User & Devices"
+        ],
+        "summary": "Revoke Specific Session",
+        "description": "Remotely revokes a specific device session belonging to the current user.",
+        "operationId": "api_revoke_session_api_v1_me_sessions__session_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Api Revoke Session Api V1 Me Sessions  Session Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/workspaces": {
+      "get": {
+        "tags": [
+          "Workspaces & Permissions"
+        ],
+        "summary": "List caller's approved workspaces",
+        "description": "Returns all active workspaces the rider is authorized for.",
+        "operationId": "api_list_workspaces_api_v1_me_workspaces_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List Workspaces Api V1 Me Workspaces Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/active-workspace": {
+      "post": {
+        "tags": [
+          "Workspaces & Permissions"
+        ],
+        "summary": "Switch active workspace",
+        "description": "Validates workspace access, updates active session context, returns capabilities.",
+        "operationId": "api_switch_active_workspace_api_v1_me_active_workspace_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActiveWorkspaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveWorkspaceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/capabilities": {
+      "get": {
+        "tags": [
+          "Workspaces & Permissions"
+        ],
+        "summary": "Get active capabilities and permissions",
+        "description": "Returns UI modules and authorized action codes. Contains no secrets.",
+        "operationId": "api_get_capabilities_api_v1_me_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/applications": {
+      "post": {
+        "tags": [
+          "Applications & Review"
+        ],
+        "summary": "Submit an application",
+        "description": "Allows riders to submit an application to start a club or become an organizer.",
+        "operationId": "api_create_application_api_v1_applications_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationCreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/mine": {
+      "get": {
+        "tags": [
+          "Applications & Review"
+        ],
+        "summary": "List caller's submitted applications",
+        "description": "Returns all applications submitted by the authenticated rider.",
+        "operationId": "api_list_my_applications_api_v1_applications_mine_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List My Applications Api V1 Applications Mine Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/decision": {
+      "post": {
+        "tags": [
+          "Applications & Review"
+        ],
+        "summary": "Review and decide on an application",
+        "description": "Approves or rejects application with Maker-Checker protection.",
+        "operationId": "api_decide_application_api_v1_applications__id__decision_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Application ID",
+              "title": "Id"
+            },
+            "description": "Application ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationDecisionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationDecisionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{id}/invitations": {
+      "post": {
+        "tags": [
+          "Organizations & Members"
+        ],
+        "summary": "Create role invitation",
+        "description": "Issues a secure, 48-hour time-limited token inviting a user to a specific role.",
+        "operationId": "api_create_invitation_api_v1_organizations__id__invitations_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleInvitationCreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleInvitationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{id}/members/{user_id}": {
+      "patch": {
+        "tags": [
+          "Organizations & Members"
+        ],
+        "summary": "Update organization member status",
+        "description": "Modifies a member's status with optimistic lock version checking.",
+        "operationId": "api_update_member_status_api_v1_organizations__id__members__user_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Target User ID",
+              "title": "User Id"
+            },
+            "description": "Target User ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Organizations & Members"
+        ],
+        "summary": "Revoke member role",
+        "description": "Revokes membership. The revocation takes effect on user's next request.",
+        "operationId": "api_revoke_member_api_v1_organizations__id__members__user_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Target User ID",
+              "title": "User Id"
+            },
+            "description": "Target User ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/invitations/{token}/accept": {
+      "post": {
+        "tags": [
+          "Invitations"
+        ],
+        "summary": "Accept an invitation",
+        "description": "Accepts an unexpired role invitation, granting membership in the organization.",
+        "operationId": "api_accept_invitation_api_v1_invitations__token__accept_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Raw invitation token",
+              "title": "Token"
+            },
+            "description": "Raw invitation token"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationAcceptOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit-events": {
+      "get": {
+        "tags": [
+          "Platform Administration"
+        ],
+        "summary": "List immutable audit events",
+        "description": "Returns compliance audit log entries. Requires audit.read permission.",
+        "operationId": "api_list_audit_events_api_v1_admin_audit_events_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEventOut"
+                  },
+                  "title": "Response Api List Audit Events Api V1 Admin Audit Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/menu": {
+      "get": {
+        "tags": [
+          "Menu Navigation"
+        ],
+        "summary": "Get navigation menu for current web interface",
+        "description": "Returns authorized, active modules for the user's active session and workspace. Returns 403 on rider_app.",
+        "operationId": "api_get_menu_api_v1_me_menu_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/organizations/{id}/modules": {
+      "put": {
+        "tags": [
+          "Organization Modules"
+        ],
+        "summary": "Toggle modules for own organization",
+        "description": "Organization owner toggles modules within platform-allowed boundaries.",
+        "operationId": "api_owner_toggle_org_modules_api_v1_organizations__id__modules_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationModuleToggleIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationModuleOut"
+                  },
+                  "title": "Response Api Owner Toggle Org Modules Api V1 Organizations  Id  Modules Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/interfaces/{interface}/modules": {
+      "get": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "List interface module configuration",
+        "description": "Lists modules configured for an interface with order and default enablement.",
+        "operationId": "api_list_interface_modules_api_v1_admin_interfaces__interface__modules_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "interface",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Interface name (organizer_portal, partner_portal, staff_console)",
+              "title": "Interface"
+            },
+            "description": "Interface name (organizer_portal, partner_portal, staff_console)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InterfaceModuleOut"
+                  },
+                  "title": "Response Api List Interface Modules Api V1 Admin Interfaces  Interface  Modules Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/interfaces/{interface}/modules/{module_code}": {
+      "put": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "Update interface module configuration",
+        "description": "Staff re-orders or changes default on/off state for an interface module.",
+        "operationId": "api_update_interface_module_api_v1_admin_interfaces__interface__modules__module_code__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "interface",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Interface name",
+              "title": "Interface"
+            },
+            "description": "Interface name"
+          },
+          {
+            "name": "module_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Module code (e.g. M12)",
+              "title": "Module Code"
+            },
+            "description": "Module code (e.g. M12)"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterfaceModuleUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterfaceModuleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/organizations/{id}/modules": {
+      "get": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "List organization module switches (Staff)",
+        "description": "Staff inspects module switches configured for an organization.",
+        "operationId": "api_staff_list_org_modules_api_v1_admin_organizations__id__modules_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationModuleOut"
+                  },
+                  "title": "Response Api Staff List Org Modules Api V1 Admin Organizations  Id  Modules Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "Staff update organization module switches",
+        "description": "Staff turns modules on or off for a specific organization.",
+        "operationId": "api_staff_update_org_modules_api_v1_admin_organizations__id__modules_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationModuleToggleIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationModuleOut"
+                  },
+                  "title": "Response Api Staff Update Org Modules Api V1 Admin Organizations  Id  Modules Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/roles/{id}/module-access": {
+      "get": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "List role module access levels",
+        "description": "Staff views module access levels for a role.",
+        "operationId": "api_list_role_module_access_api_v1_admin_roles__id__module_access_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Role ID",
+              "title": "Id"
+            },
+            "description": "Role ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleModuleAccessOut"
+                  },
+                  "title": "Response Api List Role Module Access Api V1 Admin Roles  Id  Module Access Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/roles/{id}/module-access/{module_code}/{interface}": {
+      "put": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "Update role module access level",
+        "description": "Staff configures access (none, view, manage) for a role on a module in an interface.",
+        "operationId": "api_update_role_module_access_api_v1_admin_roles__id__module_access__module_code___interface__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Role ID",
+              "title": "Id"
+            },
+            "description": "Role ID"
+          },
+          {
+            "name": "module_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Module code (e.g. M06)",
+              "title": "Module Code"
+            },
+            "description": "Module code (e.g. M06)"
+          },
+          {
+            "name": "interface",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Interface name",
+              "title": "Interface"
+            },
+            "description": "Interface name"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleModuleAccessUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleModuleAccessOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/organizations/{id}/categories/{category}/approve": {
+      "post": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "Approve partner business category",
+        "description": "Staff approves a business category for a partner organization.",
+        "operationId": "api_approve_partner_category_api_v1_admin_organizations__id__categories__category__approve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Partner category",
+              "title": "Category"
+            },
+            "description": "Partner category"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationCategoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dev/make-admin": {
+      "post": {
+        "tags": [
+          "Development Helpers"
+        ],
+        "summary": "Promote user to platform admin (Dev Only)",
+        "description": "Promotes a test user to Platform Admin (RL13). Disabled outside dev environment.",
+        "operationId": "api_dev_make_admin_api_v1_dev_make_admin_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevMakeAdminIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevMakeAdminOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActiveWorkspaceIn": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id",
+            "description": "Target workspace ID to activate",
+            "examples": [
+              "191a823e-0000-0000-0000-000000000000"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id"
+        ],
+        "title": "ActiveWorkspaceIn",
+        "description": "Select active workspace payload."
+      },
+      "ActiveWorkspaceOut": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id"
+          },
+          "workspace_type": {
+            "type": "string",
+            "title": "Workspace Type"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "role_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Role Codes"
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilities"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Active workspace successfully updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "workspace_type",
+          "organization_id",
+          "role_codes",
+          "capabilities"
+        ],
+        "title": "ActiveWorkspaceOut",
+        "description": "Result of active workspace switch."
+      },
+      "ApplicationCreateIn": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind of application (club, organizer, tour_operator, partner, instructor)",
+            "examples": [
+              "club"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150,
+            "minLength": 2,
+            "title": "Name",
+            "description": "Organization or club name",
+            "examples": [
+              "Hyderabad Riders Club"
+            ]
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City",
+            "description": "Base city",
+            "default": "Hyderabad",
+            "examples": [
+              "Hyderabad"
+            ]
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details",
+            "description": "Application specific metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "title": "ApplicationCreateIn",
+        "description": "Official application payload."
+      },
+      "ApplicationDecisionIn": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "pattern": "^(approved|rejected|changes_requested)$",
+            "title": "Decision",
+            "description": "Decision: approved, rejected, or changes_requested",
+            "examples": [
+              "approved"
+            ]
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Review feedback or rationale",
+            "examples": [
+              "Approved verified motorcycle club"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "ApplicationDecisionIn",
+        "description": "Review decision payload."
+      },
+      "ApplicationDecisionOut": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "membership_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Membership Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id",
+          "status",
+          "message"
+        ],
+        "title": "ApplicationDecisionOut",
+        "description": "Result of application decision."
+      },
+      "ApplicationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "applicant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Applicant Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "reviewer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Id"
+          },
+          "reviewer_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "applicant_id",
+          "kind",
+          "status",
+          "payload",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ApplicationOut",
+        "description": "Application entity view."
+      },
+      "AuditEventOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "actor_id": {
+            "type": "string",
+            "title": "Actor Id"
+          },
+          "active_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Active Context"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "actor_id",
+          "active_context",
+          "target",
+          "action",
+          "outcome",
+          "request_id",
+          "occurred_at"
+        ],
+        "title": "AuditEventOut",
+        "description": "Audit log entry."
+      },
+      "AuthTokenOut": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "Signed JWT access token (15 mins)"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token",
+            "description": "Rotating cryptographically secure refresh token (30 days)"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "description": "Token type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Access token expiration in seconds",
+            "default": 900
+          },
+          "account_status": {
+            "type": "string",
+            "title": "Account Status",
+            "description": "Current account state (e.g. pending_verification, active)"
+          },
+          "onboarding_required": {
+            "type": "boolean",
+            "title": "Onboarding Required",
+            "description": "True if rider has not completed initial profile setup"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "account_status",
+          "onboarding_required"
+        ],
+        "title": "AuthTokenOut",
+        "description": "Token response on successful login or refresh."
+      },
+      "CapabilitiesOut": {
+        "properties": {
+          "workspace_type": {
+            "type": "string",
+            "title": "Workspace Type"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "role_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Role Codes"
+          },
+          "enabled_module_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Enabled Module Ids"
+          },
+          "actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Actions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_type",
+          "role_codes",
+          "enabled_module_ids",
+          "actions"
+        ],
+        "title": "CapabilitiesOut",
+        "description": "Filtered capabilities and menu items for client UI."
+      },
+      "DevMakeAdminIn": {
+        "properties": {
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id",
+            "description": "Target user ID (defaults to caller)"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code",
+            "description": "RL13 (Platform Admin) or RL14 (Super Admin)",
+            "default": "RL13",
+            "examples": [
+              "RL13"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "DevMakeAdminIn",
+        "description": "Dev helper payload to grant platform admin rights to a test account."
+      },
+      "DevMakeAdminOut": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Test account promoted successfully to platform admin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "role_code"
+        ],
+        "title": "DevMakeAdminOut",
+        "description": "Result of dev make-admin promotion."
+      },
+      "DeviceIn": {
+        "properties": {
+          "platform": {
+            "type": "string",
+            "title": "Platform",
+            "description": "Platform identifier (android, ios, web)",
+            "default": "android",
+            "examples": [
+              "android"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable device model name",
+            "default": "Mobile Device",
+            "examples": [
+              "Pixel 8"
+            ]
+          },
+          "push_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Push Token",
+            "description": "FCM / APNS push notification token",
+            "examples": [
+              "sample_push_token_123"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "DeviceIn",
+        "description": "Client device information."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Overall service status",
+            "default": "ok"
+          },
+          "env": {
+            "type": "string",
+            "title": "Env",
+            "description": "Environment (e.g., dev, test, staging, prod)"
+          },
+          "database": {
+            "type": "string",
+            "title": "Database",
+            "description": "Database connectivity status: 'up' or 'down'"
+          },
+          "postgis": {
+            "type": "string",
+            "title": "Postgis",
+            "description": "PostGIS extension version string or 'missing'"
+          }
+        },
+        "type": "object",
+        "required": [
+          "env",
+          "database",
+          "postgis"
+        ],
+        "title": "HealthResponse",
+        "description": "Health check response payload."
+      },
+      "InterfaceModuleOut": {
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Module Id"
+          },
+          "module_code": {
+            "type": "string",
+            "title": "Module Code"
+          },
+          "module_name": {
+            "type": "string",
+            "title": "Module Name"
+          },
+          "release": {
+            "type": "string",
+            "title": "Release"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order"
+          },
+          "default_enabled": {
+            "type": "boolean",
+            "title": "Default Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "module_id",
+          "module_code",
+          "module_name",
+          "release",
+          "is_active",
+          "display_order",
+          "default_enabled"
+        ],
+        "title": "InterfaceModuleOut",
+        "description": "Module configuration for a web interface."
+      },
+      "InterfaceModuleUpdateIn": {
+        "properties": {
+          "display_order": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Order"
+          },
+          "default_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Enabled"
+          }
+        },
+        "type": "object",
+        "title": "InterfaceModuleUpdateIn",
+        "description": "Staff payload to reorder or toggle default enablement of an interface module."
+      },
+      "InvitationAcceptOut": {
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "organization_name": {
+            "type": "string",
+            "title": "Organization Name"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "membership_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Membership Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Invitation accepted successfully"
+          }
+        },
+        "type": "object",
+        "required": [
+          "organization_id",
+          "organization_name",
+          "role_code",
+          "membership_id"
+        ],
+        "title": "InvitationAcceptOut",
+        "description": "Result of invitation acceptance."
+      },
+      "LogoutOut": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message",
+            "default": "Successfully logged out"
+          }
+        },
+        "type": "object",
+        "title": "LogoutOut",
+        "description": "Logout confirmation payload."
+      },
+      "MeSummaryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "User unique identifier"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Account lifecycle status"
+          },
+          "onboarding_required": {
+            "type": "boolean",
+            "title": "Onboarding Required",
+            "description": "True if rider onboarding is pending"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale",
+            "description": "User preferred locale",
+            "default": "en-IN"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "onboarding_required"
+        ],
+        "title": "MeSummaryOut",
+        "description": "Minimal account summary view for the authenticated caller (Rule 6)."
+      },
+      "MemberOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "organization_id",
+          "role_code",
+          "status",
+          "version"
+        ],
+        "title": "MemberOut",
+        "description": "Organization membership view."
+      },
+      "MemberUpdateIn": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "pattern": "^(active|suspended|revoked)$",
+            "title": "Status",
+            "description": "Updated status: active, suspended, or revoked",
+            "examples": [
+              "suspended"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "Optimistic locking version check",
+            "examples": [
+              1
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version"
+        ],
+        "title": "MemberUpdateIn",
+        "description": "Update organization member status."
+      },
+      "MenuItemOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "DPR module code (e.g. M06)"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Module display name"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "view",
+              "manage"
+            ],
+            "title": "Access",
+            "description": "Access level: view or manage"
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order",
+            "description": "Sort order in the web menu"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "access",
+          "display_order"
+        ],
+        "title": "MenuItemOut",
+        "description": "An authorized, active module item for the user's web interface navigation."
+      },
+      "MenuResponse": {
+        "properties": {
+          "interface": {
+            "type": "string",
+            "title": "Interface"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "modules": {
+            "items": {
+              "$ref": "#/components/schemas/MenuItemOut"
+            },
+            "type": "array",
+            "title": "Modules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "interface",
+          "modules"
+        ],
+        "title": "MenuResponse",
+        "description": "Menu navigation response for the active session and workspace."
+      },
+      "OTPRequestIn": {
+        "properties": {
+          "country_code": {
+            "type": "string",
+            "pattern": "^\\+[1-9]\\d{0,3}$",
+            "title": "Country Code",
+            "description": "E.164 country calling code (default +91 for India)",
+            "default": "+91",
+            "examples": [
+              "+91"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 15,
+            "minLength": 7,
+            "title": "Phone",
+            "description": "Phone number without country code or in full",
+            "examples": [
+              "9876543210"
+            ]
+          },
+          "device": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeviceIn"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Requesting device metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone"
+        ],
+        "title": "OTPRequestIn",
+        "description": "Phone OTP challenge request."
+      },
+      "OTPRequestOut": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Neutral status message",
+            "default": "If the phone number is valid, a verification code has been sent."
+          },
+          "resend_in_seconds": {
+            "type": "integer",
+            "title": "Resend In Seconds",
+            "description": "Minimum seconds before another OTP can be requested",
+            "default": 60
+          }
+        },
+        "type": "object",
+        "title": "OTPRequestOut",
+        "description": "Neutral OTP response to prevent user enumeration."
+      },
+      "OTPVerifyIn": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 7,
+            "title": "Phone",
+            "description": "Normalized or raw phone number",
+            "examples": [
+              "9876543210"
+            ]
+          },
+          "otp": {
+            "type": "string",
+            "maxLength": 8,
+            "minLength": 4,
+            "title": "Otp",
+            "description": "Verification code received (use 123456 in dev mode)",
+            "examples": [
+              "123456"
+            ]
+          },
+          "device": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeviceIn"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Device completing verification"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone",
+          "otp"
+        ],
+        "title": "OTPVerifyIn",
+        "description": "OTP verification payload."
+      },
+      "OrganizationCategoryOut": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "approval_state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "title": "Approval State"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "approval_state"
+        ],
+        "title": "OrganizationCategoryOut",
+        "description": "Partner business category and its approval state."
+      },
+      "OrganizationModuleOut": {
+        "properties": {
+          "module_code": {
+            "type": "string",
+            "title": "Module Code"
+          },
+          "module_name": {
+            "type": "string",
+            "title": "Module Name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "can_toggle": {
+            "type": "boolean",
+            "title": "Can Toggle"
+          },
+          "set_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Set At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "module_code",
+          "module_name",
+          "enabled",
+          "can_toggle"
+        ],
+        "title": "OrganizationModuleOut",
+        "description": "Module status for an organization."
+      },
+      "OrganizationModuleToggleIn": {
+        "properties": {
+          "modules": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Modules",
+            "description": "Dictionary mapping module codes (e.g. 'M06', 'M12') to enabled boolean state"
+          }
+        },
+        "type": "object",
+        "required": [
+          "modules"
+        ],
+        "title": "OrganizationModuleToggleIn",
+        "description": "Payload to toggle modules for an organization."
+      },
+      "RefreshTokenIn": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token",
+            "description": "Active rotating refresh token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenIn",
+        "description": "Refresh token payload."
+      },
+      "RoleInvitationCreateIn": {
+        "properties": {
+          "role_code": {
+            "type": "string",
+            "title": "Role Code",
+            "description": "Role to assign (e.g. RL03 for Club Moderator, RL04 for Captain)",
+            "examples": [
+              "RL03"
+            ]
+          },
+          "recipient_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient User Id",
+            "description": "Specific recipient user ID"
+          },
+          "recipient_contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Contact",
+            "description": "Recipient phone or email",
+            "examples": [
+              "+919876543210"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_code"
+        ],
+        "title": "RoleInvitationCreateIn",
+        "description": "Create role invitation payload."
+      },
+      "RoleInvitationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "recipient_contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Contact"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "invitation_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invitation Token",
+            "description": "Raw token to share with recipient (shown only once)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "organization_id",
+          "role_code",
+          "recipient_contact",
+          "expires_at"
+        ],
+        "title": "RoleInvitationOut",
+        "description": "Created role invitation details."
+      },
+      "RoleModuleAccessOut": {
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Role Id"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "module_code": {
+            "type": "string",
+            "title": "Module Code"
+          },
+          "interface": {
+            "type": "string",
+            "title": "Interface"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "none",
+              "view",
+              "manage"
+            ],
+            "title": "Access"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_id",
+          "role_code",
+          "module_code",
+          "interface",
+          "access"
+        ],
+        "title": "RoleModuleAccessOut",
+        "description": "Access level granted to a role for a module within an interface."
+      },
+      "RoleModuleAccessUpdateIn": {
+        "properties": {
+          "access": {
+            "type": "string",
+            "enum": [
+              "none",
+              "view",
+              "manage"
+            ],
+            "title": "Access"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access"
+        ],
+        "title": "RoleModuleAccessUpdateIn",
+        "description": "Update role access for a module in an interface."
+      },
+      "SessionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "interface": {
+            "type": "string",
+            "title": "Interface"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "device_name": {
+            "type": "string",
+            "title": "Device Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_active_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Active At"
+          },
+          "is_current": {
+            "type": "boolean",
+            "title": "Is Current",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "interface",
+          "platform",
+          "device_name",
+          "created_at",
+          "last_active_at"
+        ],
+        "title": "SessionOut",
+        "description": "Redacted session and device metadata for device management."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WorkspaceOut": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id",
+            "description": "Rider user identifier"
+          },
+          "account_status": {
+            "type": "string",
+            "title": "Account Status",
+            "description": "Account lifecycle status"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id",
+            "description": "Workspace identifier (user id or organization id)"
+          },
+          "workspace_type": {
+            "type": "string",
+            "title": "Workspace Type",
+            "description": "Type of workspace: personal, club, business, staff"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id",
+            "description": "Linked organization ID if applicable"
+          },
+          "organization_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Name",
+            "description": "Display name of the organization"
+          },
+          "role_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Role Codes",
+            "description": "Active role codes in this workspace"
+          },
+          "permission_version": {
+            "type": "integer",
+            "title": "Permission Version",
+            "description": "Active permission version sequence",
+            "default": 1
+          },
+          "authentication_assurance": {
+            "type": "string",
+            "title": "Authentication Assurance",
+            "description": "Assurance tier",
+            "default": "otp_verified"
+          },
+          "enabled_module_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Enabled Module Ids",
+            "description": "List of platform modules available in this workspace"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "True if this is the currently active workspace",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "account_status",
+          "workspace_id",
+          "workspace_type",
+          "role_codes",
+          "enabled_module_ids"
+        ],
+        "title": "WorkspaceOut",
+        "description": "User approved workspace view."
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

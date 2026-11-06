@@ -1,0 +1,148 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint, Test & Migrations
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: bykers_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      ENV: test
+      DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/bykers_test
+      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/bykers_test
+      SECRET_KEY: ci-testing-secret-key-at-least-32-chars-long
+      CORS_ORIGINS: "*"
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Code Formatting Check (Ruff Format)
+        run: |
+          ruff format --check .
+
+      - name: Code Linter Check (Ruff)
+        run: |
+          ruff check .
+
+      - name: Type Check (Mypy)
+        run: |
+          mypy app
+
+      - name: Verify Reversible Database Migrations (Upgrade -> Downgrade -> Upgrade)
+        run: |
+          alembic upgrade head
+          alembic downgrade -1
+          alembic upgrade head
+
+      - name: Run Pytest with Coverage
+        run: |
+          pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=60
+
+      - name: Verify OpenAPI Specification Up-to-Date
+        run: |
+          python scripts/export_openapi.py
+          git diff --exit-code docs/openapi.json || (echo "OpenAPI schema in docs/openapi.json is outdated. Run scripts/export_openapi.py and commit the changes." && exit 1)
+
+  security:
+    name: Security Scans
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Security Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit bandit
+
+      - name: Dependency Vulnerability Audit (pip-audit)
+        run: |
+          pip-audit -r requirements.txt
+
+      - name: Static Security Analysis (Bandit)
+        run: |
+          bandit -r app -ll -q
+
+      - name: Secret Scanning (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    name: Docker Build & Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image (No Push on PR)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: bykers-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: bykers-backend:test
+          format: "table"
+          exit-code: "0"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+

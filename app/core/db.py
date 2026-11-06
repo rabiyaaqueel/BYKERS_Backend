@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
@@ -25,13 +26,27 @@ logger = logging.getLogger("bykers.db")
 
 # Create the async SQLAlchemy engine
 # pool_pre_ping checks connections before handing them out
-# timeout=2.0 ensures responsive failure when database is temporarily offline
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=False,
-    pool_pre_ping=True,
-    connect_args={"timeout": 2.0},
-)
+# NullPool is used in test mode to prevent Event Loop is Closed errors across async tests
+# Determine active database URL based on environment
+active_db_url = settings.TEST_DATABASE_URL if settings.ENV == "test" else settings.DATABASE_URL
+
+# TEST SAFETY: refuse to run tests unless database name contains 'test'
+if settings.ENV == "test" and "test" not in active_db_url.lower():
+    raise RuntimeError(
+        f"TEST SAFETY REFUSAL: Database URL '{active_db_url}' does not contain 'test'. "
+        "Automated tests must never run against development or production databases!"
+    )
+
+engine_kwargs = {
+    "echo": False,
+    "connect_args": {"timeout": 2.0},
+}
+if settings.ENV == "test":
+    engine_kwargs["poolclass"] = NullPool
+else:
+    engine_kwargs["pool_pre_ping"] = True
+
+engine = create_async_engine(active_db_url, **engine_kwargs)
 
 # Async session factory
 AsyncSessionLocal = async_sessionmaker(
@@ -44,6 +59,7 @@ AsyncSessionLocal = async_sessionmaker(
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy 2.0 database models in BYKERS."""
+
     pass
 
 

@@ -27,7 +27,21 @@ from app.core.errors import (
     validation_exception_handler,
 )
 from app.core.logging import setup_logging
+from app.modules.auth.router import auth_router, me_router
+from app.modules.authz.router import (
+    admin_router,
+    applications_router,
+    authz_router,
+    dev_router,
+    invitations_router,
+    orgs_router,
+)
 from app.modules.health.router import router as health_router
+from app.modules.registry.router import (
+    admin_modules_router,
+    menu_router,
+    org_modules_router,
+)
 
 
 class RequestIdMiddleware:
@@ -110,13 +124,25 @@ def create_app() -> FastAPI:
         )
 
     # 3. Register Standard Error Handlers (Rule 4)
-    app.add_exception_handler(AppError, app_error_handler)
-    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(AppError, app_error_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(Exception, generic_exception_handler)
 
     # 4. Register Routers
     app.include_router(health_router)
+    app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(me_router, prefix="/api/v1")
+    app.include_router(authz_router, prefix="/api/v1")
+    app.include_router(applications_router, prefix="/api/v1")
+    app.include_router(orgs_router, prefix="/api/v1")
+    app.include_router(invitations_router, prefix="/api/v1")
+    app.include_router(admin_router, prefix="/api/v1")
+    app.include_router(menu_router, prefix="/api/v1")
+    app.include_router(org_modules_router, prefix="/api/v1")
+    app.include_router(admin_modules_router, prefix="/api/v1")
+    if settings.ENV in ("dev", "test"):
+        app.include_router(dev_router, prefix="/api/v1")
 
     return app
 

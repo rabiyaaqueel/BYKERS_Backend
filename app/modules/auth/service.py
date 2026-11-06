@@ -28,6 +28,7 @@ from app.core.security import (
     mask_phone,
     verify_hash,
 )
+from app.core.sms import get_sms_provider
 from app.modules.auth.models import (
     AuthIdentity,
     Device,
@@ -114,6 +115,7 @@ async def request_otp(
         settings.ENV == "dev"
         and phone_norm in settings.ALLOWED_TEST_PHONES
         and settings.DEV_FIXED_OTP
+        and settings.SMS_PROVIDER == "console"
     ):
         otp_code = settings.DEV_FIXED_OTP
         logger.info(
@@ -125,7 +127,7 @@ async def request_otp(
         otp_code = f"{secrets.randbelow(900000) + 100000:06d}"
         if settings.ENV == "dev":
             logger.info(
-                "[DEV OTP] Generated random code for %s: %s",
+                "[OTP] Generated verification code for %s: %s",
                 mask_phone(phone_norm),
                 otp_code,
             )
@@ -159,6 +161,10 @@ async def request_otp(
         db.add(new_challenge)
 
     await db.commit()
+
+    # 4. Dispatch OTP via active SMS provider (Console, Fast2SMS, Twilio)
+    sms_provider = get_sms_provider()
+    await sms_provider.send_otp(phone=phone_norm, otp=otp_code)
 
     return OTPRequestOut(
         message="If the phone number is valid, a verification code has been sent.",

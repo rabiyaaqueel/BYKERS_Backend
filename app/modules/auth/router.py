@@ -16,7 +16,6 @@ from app.core.errors import get_request_id
 from app.modules.auth.schemas import (
     AuthTokenOut,
     LogoutOut,
-    MeSummaryOut,
     OTPRequestIn,
     OTPRequestOut,
     OTPVerifyIn,
@@ -24,7 +23,6 @@ from app.modules.auth.schemas import (
     SessionOut,
 )
 from app.modules.auth.service import (
-    get_user_account_summary,
     list_user_sessions,
     logout_current_session,
     refresh_session_tokens,
@@ -32,6 +30,8 @@ from app.modules.auth.service import (
     revoke_session_by_id,
     verify_otp,
 )
+from app.modules.rider.schemas import ExtendedMeOut
+from app.modules.rider.service import get_extended_me
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 me_router = APIRouter(prefix="/me", tags=["Current User & Devices"])
@@ -101,15 +101,15 @@ async def api_logout(
 
 @me_router.get(
     "",
-    response_model=MeSummaryOut,
+    response_model=ExtendedMeOut,
     summary="Get Account Summary",
-    description="Returns minimal account summary (id, status, onboarding_required, locale).",
+    description="Returns comprehensive account summary, profile, onboarding status, and consents.",
 )
 async def api_get_me(
     current_user: AuthenticatedUser = Depends(require_interface(*ALL_INTERFACES)),
     db: AsyncSession = Depends(get_db),
-) -> MeSummaryOut:
-    return await get_user_account_summary(db, current_user)
+) -> ExtendedMeOut:
+    return await get_extended_me(db, current_user.user_id)
 
 
 @me_router.get(

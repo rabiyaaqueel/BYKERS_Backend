@@ -42,6 +42,12 @@ from app.modules.registry.router import (
     menu_router,
     org_modules_router,
 )
+from app.modules.rider.router import (
+    meta_router,
+    notices_router,
+    profiles_router,
+    rider_me_router,
+)
 
 
 class RequestIdMiddleware:
@@ -133,6 +139,11 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(me_router, prefix="/api/v1")
+    app.include_router(rider_me_router, prefix="/api/v1")
+    app.include_router(meta_router, prefix="/api/v1")
+    app.include_router(notices_router, prefix="/api/v1")
+    app.include_router(notices_router)  # also mount /notices/current directly
+    app.include_router(profiles_router, prefix="/api/v1")
     app.include_router(authz_router, prefix="/api/v1")
     app.include_router(applications_router, prefix="/api/v1")
     app.include_router(orgs_router, prefix="/api/v1")

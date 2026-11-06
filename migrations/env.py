@@ -5,6 +5,7 @@ Loads the application configuration and models metadata.
 """
 
 import asyncio
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -15,6 +16,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import app.modules.auth.models  # noqa: F401
 import app.modules.authz.models  # noqa: F401
 import app.modules.registry.models  # noqa: F401
+import app.modules.rider.models  # noqa: F401
 from app.core.config import settings
 from app.core.db import Base
 
@@ -25,8 +27,17 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+# Select target database URL based on ENV or explicit environment variable
+env_override = os.environ.get("ALEMBIC_ENV") or os.environ.get("ENV")
+if env_override == "test" or (
+    os.environ.get("DATABASE_URL") and "test" in os.environ["DATABASE_URL"]
+):
+    db_url = os.environ.get("DATABASE_URL") or settings.TEST_DATABASE_URL
+else:
+    db_url = settings.DATABASE_URL
+
 # Escape '%' as '%%' to prevent configparser interpolation errors with URL-encoded passwords
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
+config.set_main_option("sqlalchemy.url", db_url.replace("%", "%%"))
 
 # Model metadata for autogenerate support
 target_metadata = Base.metadata
@@ -37,7 +48,7 @@ def run_migrations_offline() -> None:
 
     Configures the context with just a URL and not an Engine.
     """
-    url = settings.DATABASE_URL
+    url = db_url
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -63,7 +74,7 @@ def do_run_migrations(connection: Connection) -> None:
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode using an async SQLAlchemy engine."""
     connectable = create_async_engine(
-        settings.DATABASE_URL,
+        db_url,
         poolclass=pool.NullPool,
     )
 

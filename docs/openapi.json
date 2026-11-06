@@ -209,7 +209,7 @@
           "Current User & Devices"
         ],
         "summary": "Get Account Summary",
-        "description": "Returns minimal account summary (id, status, onboarding_required, locale).",
+        "description": "Returns comprehensive account summary, profile, onboarding status, and consents.",
         "operationId": "api_get_me_api_v1_me_get",
         "responses": {
           "200": {
@@ -217,7 +217,52 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MeSummaryOut"
+                  "$ref": "#/components/schemas/ExtendedMeOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Update Own Profile",
+        "description": "Allows authenticated riders to edit their display name, bio, experience, visibility, and private details.",
+        "operationId": "api_patch_profile_api_v1_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfilePatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtendedMeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -295,6 +340,452 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Api Revoke Session Api V1 Me Sessions  Session Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/account-setup": {
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Complete Rider Account Setup",
+        "description": "Validates adult declaration, checks legal notices, saves consents, and initializes rider profile.",
+        "operationId": "api_account_setup_api_v1_me_account_setup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountSetupIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtendedMeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/accept-notices": {
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Accept Updated Legal Notices",
+        "description": "Records consent when Terms of Service or Privacy Policy notice versions change.",
+        "operationId": "api_accept_notices_api_v1_me_accept_notices_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptNoticesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtendedMeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/profile-preview": {
+      "get": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Preview Own Public Profile",
+        "description": "Returns the profile exactly as visible to other riders.",
+        "operationId": "api_profile_preview_api_v1_me_profile_preview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/consents": {
+      "get": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Get Consent History",
+        "description": "Returns the complete append-only history of consent events for the caller.",
+        "operationId": "api_get_consents_api_v1_me_consents_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentEventOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api Get Consents Api V1 Me Consents Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Update Consent Preference",
+        "description": "Grants or withdraws consent for specific purposes (marketing, location, etc.). Appends immediately.",
+        "operationId": "api_update_consent_api_v1_me_consents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentEventOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/photo/upload-intent": {
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Request Avatar Upload Intent",
+        "description": "Validates image MIME type and file size (max 5 MB) and returns signed storage upload URL.",
+        "operationId": "api_photo_upload_intent_api_v1_me_photo_upload_intent_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoUploadIntentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoUploadIntentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/photo/complete": {
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Complete Avatar Upload",
+        "description": "Validates ownership and scan state of the uploaded photo and links it to rider profile.",
+        "operationId": "api_photo_complete_api_v1_me_photo_complete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoCompleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoCompleteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/meta/cities": {
+      "get": {
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "List Supported Cities",
+        "description": "Returns active motorcycle hub cities. Requires rider login.",
+        "operationId": "api_list_cities_api_v1_meta_cities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CityOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List Cities Api V1 Meta Cities Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/meta/interests": {
+      "get": {
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "List Rider Interests",
+        "description": "Returns available riding interests with English, Telugu, and Hindi translations.",
+        "operationId": "api_list_interests_api_v1_meta_interests_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InterestOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List Interests Api V1 Meta Interests Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notices/current": {
+      "get": {
+        "tags": [
+          "Legal Notices"
+        ],
+        "summary": "Get Current Legal Notices",
+        "description": "Public endpoint returning current active versions of Terms and Privacy Policy.",
+        "operationId": "api_get_current_notices_api_v1_notices_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeCurrentOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notices/current": {
+      "get": {
+        "tags": [
+          "Legal Notices"
+        ],
+        "summary": "Get Current Legal Notices",
+        "description": "Public endpoint returning current active versions of Terms and Privacy Policy.",
+        "operationId": "api_get_current_notices_notices_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeCurrentOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profiles/{user_id}": {
+      "get": {
+        "tags": [
+          "Profiles"
+        ],
+        "summary": "View Rider Public Profile",
+        "description": "Returns public profile fields respecting visibility. NEVER returns legal name, email, or phone.",
+        "operationId": "api_get_public_profile_api_v1_profiles__user_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileOut"
                 }
               }
             }
@@ -1565,6 +2056,94 @@
   },
   "components": {
     "schemas": {
+      "AcceptNoticesIn": {
+        "properties": {
+          "accepted_terms_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted Terms Version"
+          },
+          "accepted_privacy_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted Privacy Version"
+          }
+        },
+        "type": "object",
+        "title": "AcceptNoticesIn"
+      },
+      "AccountSetupIn": {
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Display Name"
+          },
+          "city_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City Id"
+          },
+          "locale": {
+            "type": "string",
+            "maxLength": 10,
+            "title": "Locale",
+            "default": "en"
+          },
+          "adult_declaration": {
+            "type": "boolean",
+            "title": "Adult Declaration"
+          },
+          "accepted_terms_version": {
+            "type": "string",
+            "title": "Accepted Terms Version"
+          },
+          "accepted_privacy_version": {
+            "type": "string",
+            "title": "Accepted Privacy Version"
+          },
+          "marketing_consent": {
+            "type": "boolean",
+            "title": "Marketing Consent",
+            "default": false
+          },
+          "interests": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Interests"
+          }
+        },
+        "type": "object",
+        "required": [
+          "display_name",
+          "adult_declaration",
+          "accepted_terms_version",
+          "accepted_privacy_version"
+        ],
+        "title": "AccountSetupIn"
+      },
       "ActiveWorkspaceIn": {
         "properties": {
           "workspace_id": {
@@ -2002,6 +2581,99 @@
         "title": "CapabilitiesOut",
         "description": "Filtered capabilities and menu items for client UI."
       },
+      "CityOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "state",
+          "country",
+          "active"
+        ],
+        "title": "CityOut"
+      },
+      "ConsentEventOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "notice_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice Version"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "purpose",
+          "action",
+          "occurred_at"
+        ],
+        "title": "ConsentEventOut"
+      },
+      "ConsentUpdateIn": {
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "purpose",
+          "action"
+        ],
+        "title": "ConsentUpdateIn"
+      },
       "DevMakeAdminIn": {
         "properties": {
           "user_id": {
@@ -2096,6 +2768,79 @@
         "title": "DeviceIn",
         "description": "Client device information."
       },
+      "ExtendedMeOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "phone_masked": {
+            "type": "string",
+            "title": "Phone Masked"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "onboarding_required": {
+            "type": "boolean",
+            "title": "Onboarding Required"
+          },
+          "account_setup_completed": {
+            "type": "boolean",
+            "title": "Account Setup Completed"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicProfileOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "private_details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrivateDetailsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "consents": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Consents"
+          },
+          "verified_badges": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Verified Badges"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "phone_masked",
+          "status",
+          "onboarding_required",
+          "account_setup_completed",
+          "locale"
+        ],
+        "title": "ExtendedMeOut"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2141,6 +2886,40 @@
         ],
         "title": "HealthResponse",
         "description": "Health check response payload."
+      },
+      "InterestOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_te": {
+            "type": "string",
+            "title": "Name Te"
+          },
+          "name_hi": {
+            "type": "string",
+            "title": "Name Hi"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name_en",
+          "name_te",
+          "name_hi"
+        ],
+        "title": "InterestOut"
       },
       "InterfaceModuleOut": {
         "properties": {
@@ -2265,40 +3044,6 @@
         "type": "object",
         "title": "LogoutOut",
         "description": "Logout confirmation payload."
-      },
-      "MeSummaryOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "User unique identifier"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status",
-            "description": "Account lifecycle status"
-          },
-          "onboarding_required": {
-            "type": "boolean",
-            "title": "Onboarding Required",
-            "description": "True if rider onboarding is pending"
-          },
-          "locale": {
-            "type": "string",
-            "title": "Locale",
-            "description": "User preferred locale",
-            "default": "en-IN"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "status",
-          "onboarding_required"
-        ],
-        "title": "MeSummaryOut",
-        "description": "Minimal account summary view for the authenticated caller (Rule 6)."
       },
       "MemberOut": {
         "properties": {
@@ -2440,6 +3185,61 @@
         ],
         "title": "MenuResponse",
         "description": "Menu navigation response for the active session and workspace."
+      },
+      "NoticeCurrentOut": {
+        "properties": {
+          "terms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoticeVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoticeVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "NoticeCurrentOut"
+      },
+      "NoticeVersionOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Published At"
+          },
+          "text_url": {
+            "type": "string",
+            "title": "Text Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "version",
+          "published_at",
+          "text_url"
+        ],
+        "title": "NoticeVersionOut"
       },
       "OTPRequestIn": {
         "properties": {
@@ -2637,6 +3437,341 @@
         ],
         "title": "OrganizationModuleToggleIn",
         "description": "Payload to toggle modules for an organization."
+      },
+      "PhotoCompleteIn": {
+        "properties": {
+          "media_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Asset Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_asset_id"
+        ],
+        "title": "PhotoCompleteIn"
+      },
+      "PhotoCompleteOut": {
+        "properties": {
+          "media_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Asset Id"
+          },
+          "scan_state": {
+            "type": "string",
+            "title": "Scan State"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_asset_id",
+          "scan_state"
+        ],
+        "title": "PhotoCompleteOut"
+      },
+      "PhotoUploadIntentIn": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "mime_type",
+          "bytes"
+        ],
+        "title": "PhotoUploadIntentIn"
+      },
+      "PhotoUploadIntentOut": {
+        "properties": {
+          "media_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Asset Id"
+          },
+          "upload_url": {
+            "type": "string",
+            "title": "Upload Url"
+          },
+          "object_key": {
+            "type": "string",
+            "title": "Object Key"
+          },
+          "expires_in_seconds": {
+            "type": "integer",
+            "title": "Expires In Seconds",
+            "default": 900
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_asset_id",
+          "upload_url",
+          "object_key"
+        ],
+        "title": "PhotoUploadIntentOut"
+      },
+      "PrivateDetailsOut": {
+        "properties": {
+          "legal_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "title": "PrivateDetailsOut"
+      },
+      "ProfilePatchIn": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "bio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bio"
+          },
+          "home_city_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Home City Id"
+          },
+          "experience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experience"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visibility"
+          },
+          "languages": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Languages"
+          },
+          "interests": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interests"
+          },
+          "legal_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "title": "ProfilePatchIn"
+      },
+      "PublicProfileOut": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "bio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bio"
+          },
+          "experience": {
+            "type": "string",
+            "title": "Experience"
+          },
+          "visibility": {
+            "type": "string",
+            "title": "Visibility"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Languages"
+          },
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestOut"
+            },
+            "type": "array",
+            "title": "Interests"
+          },
+          "verified_badges": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Verified Badges"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "display_name",
+          "experience",
+          "visibility"
+        ],
+        "title": "PublicProfileOut"
       },
       "RefreshTokenIn": {
         "properties": {

@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -203,3 +203,4 @@ class ExtendedMeOut(BaseModel):
     private_details: Optional[PrivateDetailsOut] = None
     consents: Dict[str, str] = Field(default_factory=dict)
     verified_badges: List[str] = Field(default_factory=list)
+    profile_completeness: Dict[str, Any] = Field(default_factory=dict)

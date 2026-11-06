@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -17,6 +17,7 @@ from app.core.errors import (
 from app.core.security import mask_phone
 from app.core.storage import get_storage_provider
 from app.modules.auth.models import User, UserStatus
+from app.modules.garage.models import Bike
 from app.modules.rider.models import (
     City,
     ConsentEvent,
@@ -555,6 +556,19 @@ async def get_extended_me(db: AsyncSession, user_id: uuid.UUID) -> ExtendedMeOut
     )
     account_setup_completed = profile is not None and user.status == UserStatus.ACTIVE
 
+    bike_stmt = select(func.count(Bike.id)).where(
+        Bike.user_id == user_id, Bike.archived_at.is_(None)
+    )
+    bike_res = await db.execute(bike_stmt)
+    active_bikes_count = bike_res.scalar() or 0
+    has_active_bike = active_bikes_count > 0
+
+    profile_completeness = {
+        "account_setup": account_setup_completed,
+        "has_bike": has_active_bike,
+        "active_bikes_count": active_bikes_count,
+    }
+
     return ExtendedMeOut(
         id=user.id,
         phone_masked=phone_masked,
@@ -566,4 +580,5 @@ async def get_extended_me(db: AsyncSession, user_id: uuid.UUID) -> ExtendedMeOut
         private_details=PrivateDetailsOut.model_validate(priv) if priv else None,
         consents=consents_map,
         verified_badges=["phone verified"],
+        profile_completeness=profile_completeness,
     )

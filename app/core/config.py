@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     # JWT signing key (Keep secret in production!)
     SECRET_KEY: str = "dev-insecure-secret-key-change-in-production-min-32-chars"
+    REGISTRATION_ENCRYPTION_KEY: Optional[str] = None
 
     # Token expiration periods
     ACCESS_TOKEN_MINUTES: int = 15

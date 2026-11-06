@@ -42,6 +42,23 @@ class StorageProvider(abc.ABC):
         """Generates a short-lived download URL (default 15 minutes)."""
         pass
 
+    def generate_upload_url(
+        self,
+        key: str,
+        content_type: str = "application/octet-stream",
+        expires_in_seconds: int = 900,
+    ) -> str:
+        """Synchronous helper for generating upload URL."""
+        return f"/api/v1/storage/{key}"
+
+    def generate_download_url(
+        self,
+        key: str,
+        expires_in_seconds: int = 900,
+    ) -> str:
+        """Synchronous helper for generating download URL."""
+        return f"/api/v1/storage/{key}"
+
     @abc.abstractmethod
     async def delete(self, key: str) -> bool:
         """Deletes an object by key."""

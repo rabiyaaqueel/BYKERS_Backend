@@ -174,6 +174,18 @@ Customizable modules apply strictly to the three web interfaces:
 ### Recent Authentication Requirement
 All `/admin/...` module configuration endpoints enforce recent authentication (`require_recent_auth(max_age_seconds=900)`). If full step-up authentication is not yet built (Task B2), the dependency verifies authentication assurance and session timestamps, and is safely passable for development testing in `ENV=dev` and `ENV=test`.
 
+---
+
+## 8. Motorcycle Garage (Task E - Modules M03 & M21)
+
+The garage module enables riders to manage motorcycles, maintenance logs, and vehicle documents.
+- **Rider Only**: Requires `rider_app` interface; organizer and staff tokens receive 403 `FORBIDDEN_INTERFACE`.
+- **Encryption at Rest**: Vehicle registration numbers are encrypted with AES/Fernet and returned masked (`******1234`).
+- **Optimistic Concurrency**: `PATCH /me/bikes/{id}` requires the `version` field (returns 409 `CONFLICT` on mismatch).
+- **Idempotency**: `POST /me/bikes` supports `Idempotency-Key` header to prevent double submissions.
+- **Demo Guide**: Step-by-step PowerShell testing scripts (add bike, add second bike, switch preferred, archive) are documented in [`docs/DEMO_GARAGE.md`](file:///c:/Users/USER/Desktop/BYKERS_Backend/docs/DEMO_GARAGE.md).
+- **API Handoff**: Complete endpoint and payload reference for Flutter developers is in [`docs/API_HANDOFF.md`](file:///c:/Users/USER/Desktop/BYKERS_Backend/docs/API_HANDOFF.md).
+
 
 ```
 BYKERS_Backend/

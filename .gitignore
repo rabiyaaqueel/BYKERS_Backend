@@ -48,6 +48,9 @@ htmlcov/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Binaries
+ngrok.exe
 $RECYCLE.BIN/
 .DS_Store
 

@@ -97,6 +97,9 @@ async def seed() -> None:
         # 4. Seed Platform Admin
         admin_user = await get_or_create_user("+919876543230")
 
+        # 4b. Seed Partner Owner
+        partner_owner = await get_or_create_user("+919876543240")
+
         # 5. Seed Sample Motorcycle Club Organization
         club_name = "Hyderabad Falcon Riders Club"
         stmt_club = select(Organization).where(Organization.name == club_name)
@@ -156,6 +159,46 @@ async def seed() -> None:
                 )
             )
 
+        # 5b. Seed Sample Partner Business Organization
+        partner_name = "Highway 44 Biker Cafe & Pitstop"
+        stmt_partner = select(Organization).where(Organization.name == partner_name)
+        sample_partner = (await db.execute(stmt_partner)).scalar_one_or_none()
+
+        if not sample_partner:
+            sample_partner = Organization(
+                type=OrganizationType.BUSINESS.value,
+                name=partner_name,
+                approval_state=OrgApprovalState.APPROVED.value,
+                created_by=partner_owner.id,
+            )
+            db.add(sample_partner)
+            await db.flush()
+
+        await ensure_membership(
+            partner_owner.id, sample_partner.id, RoleCode.RL07_PARTNER_OWNER.value
+        )
+
+        # Seed approved partner category
+        from app.modules.registry.models import (
+            CategoryApprovalState,
+            OrganizationCategory,
+        )
+
+        stmt_oc = select(OrganizationCategory).where(
+            OrganizationCategory.organization_id == sample_partner.id,
+            OrganizationCategory.category == "cafe",
+        )
+        if not (await db.execute(stmt_oc)).scalar_one_or_none():
+            db.add(
+                OrganizationCategory(
+                    organization_id=sample_partner.id,
+                    category="cafe",
+                    approval_state=CategoryApprovalState.APPROVED.value,
+                    approved_by=admin_user.id,
+                    approved_at=datetime.now(timezone.utc),
+                )
+            )
+
         # 6. Seed Platform Governance Organization & Admin Membership
         stmt_plat = select(Organization).where(Organization.type == OrganizationType.PLATFORM.value)
         plat_org = (await db.execute(stmt_plat)).scalar_one_or_none()
@@ -183,6 +226,7 @@ async def seed() -> None:
         print(f"  - Club Moderator:     +919876543221 (Club Workspace: {sample_club.name})")
         print(f"  - Ride Captain:       +919876543222 (Club Workspace: {sample_club.name})")
         print("  - Platform Admin:     +919876543230 (Staff Workspace & Audit Access)")
+        print(f"  - Partner Owner:      +919876543240 (Partner Workspace: {sample_partner.name})")
         print("==================================================\n")
 
     await engine.dispose()

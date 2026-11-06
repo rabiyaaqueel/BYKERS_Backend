@@ -426,6 +426,22 @@ async def decide_application(
                 else RoleCode.RL05_EVENT_ORGANIZER.value
             )
         )
+
+        # 3. If partner application, provision approved partner category
+        if app.kind == "partner" and app.payload.get("category"):
+            from app.modules.registry.models import (
+                CategoryApprovalState,
+                OrganizationCategory,
+            )
+
+            org_cat = OrganizationCategory(
+                organization_id=org.id,
+                category=app.payload["category"],
+                approval_state=CategoryApprovalState.APPROVED.value,
+                approved_by=reviewer.user_id,
+                approved_at=datetime.now(timezone.utc),
+            )
+            db.add(org_cat)
         stmt_role = select(Role).where(Role.code == target_role_code)
         res_role = await db.execute(stmt_role)
         role = res_role.scalar_one_or_none()

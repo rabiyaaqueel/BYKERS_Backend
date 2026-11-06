@@ -136,7 +136,7 @@ async def api_decide_application(
     id: uuid.UUID = Path(..., description="Application ID"),
     payload: ApplicationDecisionIn = Body(...),
     user: AuthenticatedUser = Depends(require_interface("staff_console")),
-    _perm: AuthenticatedUser = Depends(require("application.review")),
+    _perm: AuthenticatedUser = Depends(require("application.review", module_code="M31")),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> ApplicationDecisionOut:
@@ -163,7 +163,7 @@ async def api_create_invitation(
     user: AuthenticatedUser = Depends(
         require_interface("organizer_portal", "partner_portal", "staff_console")
     ),
-    _perm: AuthenticatedUser = Depends(require("invitation.create")),
+    _perm: AuthenticatedUser = Depends(require("invitation.create", module_code="M06")),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> RoleInvitationOut:
@@ -200,7 +200,7 @@ async def api_update_member_status(
     admin: AuthenticatedUser = Depends(
         require_interface("organizer_portal", "partner_portal", "staff_console")
     ),
-    _perm: AuthenticatedUser = Depends(require("role.assign")),
+    _perm: AuthenticatedUser = Depends(require("role.assign", module_code="M06")),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> MemberOut:
@@ -226,7 +226,7 @@ async def api_revoke_member(
     admin: AuthenticatedUser = Depends(
         require_interface("organizer_portal", "partner_portal", "staff_console")
     ),
-    _perm: AuthenticatedUser = Depends(require("role.assign")),
+    _perm: AuthenticatedUser = Depends(require("role.assign", module_code="M06")),
     db: AsyncSession = Depends(get_db),
     x_request_id: str = Header(default=""),
 ) -> MemberOut:
@@ -249,7 +249,7 @@ async def api_revoke_member(
 async def api_list_audit_events(
     limit: int = Query(default=50, ge=1, le=100),
     user: AuthenticatedUser = Depends(require_interface("staff_console")),
-    _perm: AuthenticatedUser = Depends(require("audit.read")),
+    _perm: AuthenticatedUser = Depends(require("audit.read", module_code="M31")),
     db: AsyncSession = Depends(get_db),
 ) -> List[AuditEventOut]:
     return await service.list_audit_events(db=db, limit=limit)

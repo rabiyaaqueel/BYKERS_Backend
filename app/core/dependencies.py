@@ -10,6 +10,7 @@ Every protected request:
 
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, Set
 
@@ -20,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.core.db import get_db
 from app.core.errors import ForbiddenError, UnauthorizedError
 from app.core.security import decode_access_token
@@ -144,3 +146,37 @@ def require_interface(*allowed_interfaces: str) -> Callable[..., Any]:
     # Attach metadata so reflection/test scans can verify interface declarations
     setattr(_enforce_interface, "__allowed_interfaces__", allowed_set)
     return _enforce_interface
+
+
+def require_recent_auth(max_age_seconds: int = 900) -> Callable[..., Any]:
+    """FastAPI dependency enforcing recent authentication for sensitive operations.
+
+    Task C2 Addition 5:
+    - Verifies that the session was created or elevated within max_age_seconds (default 15 mins).
+    - Passable in ENV=dev for convenience of dev admin testing (noted in docs).
+    """
+
+    async def _enforce_recent_auth(
+        current_user: AuthenticatedUser = Depends(get_current_user),
+    ) -> AuthenticatedUser:
+        if settings.ENV == "dev":
+            return current_user
+
+        now = datetime.now(timezone.utc)
+        created_at = current_user.session.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+
+        age = (now - created_at).total_seconds()
+        if age > max_age_seconds:
+            raise ForbiddenError(
+                "Recent authentication is required for this administrative operation",
+                code="RECENT_AUTH_REQUIRED",
+                details={
+                    "max_age_seconds": max_age_seconds,
+                    "session_age_seconds": int(age),
+                },
+            )
+        return current_user
+
+    return _enforce_recent_auth

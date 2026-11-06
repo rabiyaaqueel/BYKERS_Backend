@@ -918,6 +918,591 @@
         }
       }
     },
+    "/api/v1/me/menu": {
+      "get": {
+        "tags": [
+          "Menu Navigation"
+        ],
+        "summary": "Get navigation menu for current web interface",
+        "description": "Returns authorized, active modules for the user's active session and workspace. Returns 403 on rider_app.",
+        "operationId": "api_get_menu_api_v1_me_menu_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/organizations/{id}/modules": {
+      "put": {
+        "tags": [
+          "Organization Modules"
+        ],
+        "summary": "Toggle modules for own organization",
+        "description": "Organization owner toggles modules within platform-allowed boundaries.",
+        "operationId": "api_owner_toggle_org_modules_api_v1_organizations__id__modules_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationModuleToggleIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationModuleOut"
+                  },
+                  "title": "Response Api Owner Toggle Org Modules Api V1 Organizations  Id  Modules Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/interfaces/{interface}/modules": {
+      "get": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "List interface module configuration",
+        "description": "Lists modules configured for an interface with order and default enablement.",
+        "operationId": "api_list_interface_modules_api_v1_admin_interfaces__interface__modules_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "interface",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Interface name (organizer_portal, partner_portal, staff_console)",
+              "title": "Interface"
+            },
+            "description": "Interface name (organizer_portal, partner_portal, staff_console)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InterfaceModuleOut"
+                  },
+                  "title": "Response Api List Interface Modules Api V1 Admin Interfaces  Interface  Modules Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/interfaces/{interface}/modules/{module_code}": {
+      "put": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "Update interface module configuration",
+        "description": "Staff re-orders or changes default on/off state for an interface module.",
+        "operationId": "api_update_interface_module_api_v1_admin_interfaces__interface__modules__module_code__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "interface",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Interface name",
+              "title": "Interface"
+            },
+            "description": "Interface name"
+          },
+          {
+            "name": "module_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Module code (e.g. M12)",
+              "title": "Module Code"
+            },
+            "description": "Module code (e.g. M12)"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterfaceModuleUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterfaceModuleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/organizations/{id}/modules": {
+      "get": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "List organization module switches (Staff)",
+        "description": "Staff inspects module switches configured for an organization.",
+        "operationId": "api_staff_list_org_modules_api_v1_admin_organizations__id__modules_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationModuleOut"
+                  },
+                  "title": "Response Api Staff List Org Modules Api V1 Admin Organizations  Id  Modules Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "Staff update organization module switches",
+        "description": "Staff turns modules on or off for a specific organization.",
+        "operationId": "api_staff_update_org_modules_api_v1_admin_organizations__id__modules_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationModuleToggleIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationModuleOut"
+                  },
+                  "title": "Response Api Staff Update Org Modules Api V1 Admin Organizations  Id  Modules Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/roles/{id}/module-access": {
+      "get": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "List role module access levels",
+        "description": "Staff views module access levels for a role.",
+        "operationId": "api_list_role_module_access_api_v1_admin_roles__id__module_access_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Role ID",
+              "title": "Id"
+            },
+            "description": "Role ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleModuleAccessOut"
+                  },
+                  "title": "Response Api List Role Module Access Api V1 Admin Roles  Id  Module Access Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/roles/{id}/module-access/{module_code}/{interface}": {
+      "put": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "Update role module access level",
+        "description": "Staff configures access (none, view, manage) for a role on a module in an interface.",
+        "operationId": "api_update_role_module_access_api_v1_admin_roles__id__module_access__module_code___interface__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Role ID",
+              "title": "Id"
+            },
+            "description": "Role ID"
+          },
+          {
+            "name": "module_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Module code (e.g. M06)",
+              "title": "Module Code"
+            },
+            "description": "Module code (e.g. M06)"
+          },
+          {
+            "name": "interface",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Interface name",
+              "title": "Interface"
+            },
+            "description": "Interface name"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleModuleAccessUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleModuleAccessOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/organizations/{id}/categories/{category}/approve": {
+      "post": {
+        "tags": [
+          "Staff Module Administration"
+        ],
+        "summary": "Approve partner business category",
+        "description": "Staff approves a business category for a partner organization.",
+        "operationId": "api_approve_partner_category_api_v1_admin_organizations__id__categories__category__approve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Partner category",
+              "title": "Category"
+            },
+            "description": "Partner category"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationCategoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/dev/make-admin": {
       "post": {
         "tags": [
@@ -1557,6 +2142,81 @@
         "title": "HealthResponse",
         "description": "Health check response payload."
       },
+      "InterfaceModuleOut": {
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Module Id"
+          },
+          "module_code": {
+            "type": "string",
+            "title": "Module Code"
+          },
+          "module_name": {
+            "type": "string",
+            "title": "Module Name"
+          },
+          "release": {
+            "type": "string",
+            "title": "Release"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order"
+          },
+          "default_enabled": {
+            "type": "boolean",
+            "title": "Default Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "module_id",
+          "module_code",
+          "module_name",
+          "release",
+          "is_active",
+          "display_order",
+          "default_enabled"
+        ],
+        "title": "InterfaceModuleOut",
+        "description": "Module configuration for a web interface."
+      },
+      "InterfaceModuleUpdateIn": {
+        "properties": {
+          "display_order": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Order"
+          },
+          "default_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Enabled"
+          }
+        },
+        "type": "object",
+        "title": "InterfaceModuleUpdateIn",
+        "description": "Staff payload to reorder or toggle default enablement of an interface module."
+      },
       "InvitationAcceptOut": {
         "properties": {
           "organization_id": {
@@ -1710,6 +2370,77 @@
         "title": "MemberUpdateIn",
         "description": "Update organization member status."
       },
+      "MenuItemOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "DPR module code (e.g. M06)"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Module display name"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "view",
+              "manage"
+            ],
+            "title": "Access",
+            "description": "Access level: view or manage"
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order",
+            "description": "Sort order in the web menu"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "access",
+          "display_order"
+        ],
+        "title": "MenuItemOut",
+        "description": "An authorized, active module item for the user's web interface navigation."
+      },
+      "MenuResponse": {
+        "properties": {
+          "interface": {
+            "type": "string",
+            "title": "Interface"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "modules": {
+            "items": {
+              "$ref": "#/components/schemas/MenuItemOut"
+            },
+            "type": "array",
+            "title": "Modules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "interface",
+          "modules"
+        ],
+        "title": "MenuResponse",
+        "description": "Menu navigation response for the active session and workspace."
+      },
       "OTPRequestIn": {
         "properties": {
           "country_code": {
@@ -1811,6 +2542,101 @@
         ],
         "title": "OTPVerifyIn",
         "description": "OTP verification payload."
+      },
+      "OrganizationCategoryOut": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "approval_state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "title": "Approval State"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "approval_state"
+        ],
+        "title": "OrganizationCategoryOut",
+        "description": "Partner business category and its approval state."
+      },
+      "OrganizationModuleOut": {
+        "properties": {
+          "module_code": {
+            "type": "string",
+            "title": "Module Code"
+          },
+          "module_name": {
+            "type": "string",
+            "title": "Module Name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "can_toggle": {
+            "type": "boolean",
+            "title": "Can Toggle"
+          },
+          "set_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Set At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "module_code",
+          "module_name",
+          "enabled",
+          "can_toggle"
+        ],
+        "title": "OrganizationModuleOut",
+        "description": "Module status for an organization."
+      },
+      "OrganizationModuleToggleIn": {
+        "properties": {
+          "modules": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Modules",
+            "description": "Dictionary mapping module codes (e.g. 'M06', 'M12') to enabled boolean state"
+          }
+        },
+        "type": "object",
+        "required": [
+          "modules"
+        ],
+        "title": "OrganizationModuleToggleIn",
+        "description": "Payload to toggle modules for an organization."
       },
       "RefreshTokenIn": {
         "properties": {
@@ -1928,6 +2754,65 @@
         ],
         "title": "RoleInvitationOut",
         "description": "Created role invitation details."
+      },
+      "RoleModuleAccessOut": {
+        "properties": {
+          "role_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Role Id"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "module_code": {
+            "type": "string",
+            "title": "Module Code"
+          },
+          "interface": {
+            "type": "string",
+            "title": "Interface"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "none",
+              "view",
+              "manage"
+            ],
+            "title": "Access"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_id",
+          "role_code",
+          "module_code",
+          "interface",
+          "access"
+        ],
+        "title": "RoleModuleAccessOut",
+        "description": "Access level granted to a role for a module within an interface."
+      },
+      "RoleModuleAccessUpdateIn": {
+        "properties": {
+          "access": {
+            "type": "string",
+            "enum": [
+              "none",
+              "view",
+              "manage"
+            ],
+            "title": "Access"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access"
+        ],
+        "title": "RoleModuleAccessUpdateIn",
+        "description": "Update role access for a module in an interface."
       },
       "SessionOut": {
         "properties": {

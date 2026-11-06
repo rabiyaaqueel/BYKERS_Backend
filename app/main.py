@@ -37,6 +37,11 @@ from app.modules.authz.router import (
     orgs_router,
 )
 from app.modules.health.router import router as health_router
+from app.modules.registry.router import (
+    admin_modules_router,
+    menu_router,
+    org_modules_router,
+)
 
 
 class RequestIdMiddleware:
@@ -133,6 +138,9 @@ def create_app() -> FastAPI:
     app.include_router(orgs_router, prefix="/api/v1")
     app.include_router(invitations_router, prefix="/api/v1")
     app.include_router(admin_router, prefix="/api/v1")
+    app.include_router(menu_router, prefix="/api/v1")
+    app.include_router(org_modules_router, prefix="/api/v1")
+    app.include_router(admin_modules_router, prefix="/api/v1")
     if settings.ENV in ("dev", "test"):
         app.include_router(dev_router, prefix="/api/v1")
 

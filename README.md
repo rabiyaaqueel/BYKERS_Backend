@@ -151,7 +151,29 @@ The partner can now access the live API at:
 
 ---
 
-## 8. Project Structure Explained (for Beginners)
+## 9. Task C2: Module Registry & Customization (Three Web Interfaces)
+
+Customizable modules apply strictly to the three web interfaces:
+1. `organizer_portal` (Club Organizers)
+2. `partner_portal` (Commercial Partners & Businesses)
+3. `staff_console` (Platform Administrators)
+
+> **Note**: The `rider_app` has a fixed native layout and menu; calling `/me/menu` with a `rider_app` token returns `403 Forbidden`.
+
+### Key Endpoints
+- `GET /api/v1/me/menu`: Generates active, ordered menu navigation for the current web workspace.
+- `GET /api/v1/admin/modules/interfaces/{interface}`: Lists interface module definitions and default on/off states (Staff only).
+- `PUT /api/v1/admin/modules/interfaces/{interface}/{module_code}`: Reorders or updates default enablement of an interface module (Staff only).
+- `GET /api/v1/organizations/{id}/modules`: Lists module switches for an organization.
+- `PUT /api/v1/admin/organizations/{id}/modules`: Staff toggles module enablement for an organization.
+- `PUT /api/v1/organizations/{id}/modules`: Organization owner toggles allowed modules (cannot re-enable modules locked by staff).
+- `GET /api/v1/admin/modules/roles/{id}/module-access`: Views module access levels (`none`, `view`, `manage`) for a role.
+- `PUT /api/v1/admin/modules/roles/{id}/module-access/{module_code}/{interface}`: Staff configures role module access.
+- `POST /api/v1/admin/organizations/{id}/categories/{category}/approve`: Staff approves a partner business category (unlocking that category's modules).
+
+### Recent Authentication Requirement
+All `/admin/...` module configuration endpoints enforce recent authentication (`require_recent_auth(max_age_seconds=900)`). If full step-up authentication is not yet built (Task B2), the dependency verifies authentication assurance and session timestamps, and is safely passable for development testing in `ENV=dev` and `ENV=test`.
+
 
 ```
 BYKERS_Backend/

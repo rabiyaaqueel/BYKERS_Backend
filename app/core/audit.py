@@ -11,6 +11,7 @@ Audit log is append-only for:
 """
 
 import logging
+from typing import Any, Dict, Optional
 
 audit_logger = logging.getLogger("bykers.audit")
 
@@ -22,14 +23,17 @@ def record_audit_event(
     reason: str = "",
     request_id: str = "",
     outcome: str = "success",
+    metadata: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ) -> None:
-    """Record an audit trail event."""
+    """Record an audit trail event in structured logs."""
     audit_logger.info(
-        "AUDIT: actor=%s action=%s resource=%s reason=%s outcome=%s request_id=%s",
+        "AUDIT: actor=%s action=%s resource=%s reason=%s outcome=%s request_id=%s metadata=%s",
         actor,
         action,
         resource,
         reason,
         outcome,
         request_id,
+        metadata or {},
     )

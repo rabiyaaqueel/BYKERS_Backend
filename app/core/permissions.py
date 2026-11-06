@@ -43,6 +43,11 @@ from app.modules.authz.models import (
     Role,
     RolePermission,
 )
+from app.modules.registry.models import (
+    InterfaceModule,
+    Module,
+    OrganizationModule,
+)
 
 logger = logging.getLogger("bykers.permissions")
 
@@ -91,6 +96,7 @@ async def can(
     resource: Optional[Any] = None,
     context: Optional[Dict[str, Any]] = None,
     allowed_interfaces: Optional[Tuple[str, ...]] = None,
+    module_code: Optional[str] = None,
 ) -> Tuple[bool, str]:
     """Evaluates whether the user can perform the specified action in their active context.
 
@@ -98,9 +104,10 @@ async def can(
     Evaluation order:
     1. Authenticate session & check account status
     2. Check interface compatibility (session.interface in allowed_interfaces)
-    3. Load active context
-    4. Check for Platform Administrator / Super Admin privileges (RL13, RL14)
-    5. Evaluate role and granted permissions within active context
+    3. Check module enablement & release status (Task C2)
+    4. Load active context
+    5. Check for Platform Administrator / Super Admin privileges (RL13, RL14)
+    6. Evaluate role and granted permissions within active context
     """
     # 1. Authenticate session & Check account status
     if not user or not user.user:
@@ -116,7 +123,71 @@ async def can(
             f"Interface '{user.session.interface}' is not permitted to perform action '{action}'",
         )
 
-    # 3. Load active context
+    # 3. Check module enablement & release status (Task C2: Rule - Hiding a module is not security)
+    if module_code:
+        stmt_mod = select(Module).where(Module.code == module_code)
+        res_mod = await db.execute(stmt_mod)
+        mod = res_mod.scalars().first()
+        if not mod:
+            return False, f"Module '{module_code}' does not exist"
+        if not mod.is_active:
+            return (
+                False,
+                f"Module '{module_code}' is disabled in this release (release {mod.release})",
+            )
+
+        # Check interface module enablement for web interfaces
+        if user.session.interface != "rider_app":
+            stmt_iface = select(InterfaceModule).where(
+                InterfaceModule.interface == user.session.interface,
+                InterfaceModule.module_id == mod.id,
+            )
+            res_iface = await db.execute(stmt_iface)
+            iface_mod = res_iface.scalars().first()
+            if not iface_mod:
+                return (
+                    False,
+                    (
+                        f"Module '{module_code}' is not permitted for interface "
+                        f"'{user.session.interface}'"
+                    ),
+                )
+
+            # Check organization-level toggle if in an organization context
+            session_ctx = user.session.active_context or {}
+            active_ctx = context or session_ctx
+            org_id_raw = active_ctx.get("organization_id")
+            if org_id_raw:
+                try:
+                    org_uuid = uuid.UUID(str(org_id_raw))
+                    stmt_org_mod = select(OrganizationModule).where(
+                        OrganizationModule.organization_id == org_uuid,
+                        OrganizationModule.module_id == mod.id,
+                    )
+                    res_org_mod = await db.execute(stmt_org_mod)
+                    org_mod = res_org_mod.scalars().first()
+                    if org_mod is not None:
+                        if not org_mod.enabled:
+                            return (
+                                False,
+                                f"Module '{module_code}' is disabled for this organization",
+                            )
+                    else:
+                        if not iface_mod.default_enabled:
+                            return (
+                                False,
+                                (
+                                    f"Module '{module_code}' is not enabled by default for "
+                                    f"this organization"
+                                ),
+                            )
+                except (ValueError, TypeError):
+                    pass
+
+        if action in ("", "module.access"):
+            return True, f"Module '{module_code}' is enabled and accessible"
+
+    # 4. Load active context
     session_ctx = user.session.active_context or {}
     active_ctx = context or session_ctx
 
@@ -224,6 +295,7 @@ def require(
     permission_code: str,
     resource_loader: Optional[Callable[..., Any]] = None,
     allowed_interfaces: Optional[Tuple[str, ...]] = None,
+    module_code: Optional[str] = None,
 ) -> Callable:
     """FastAPI dependency factory enforcing that the authenticated user possesses the permission."""
 
@@ -241,6 +313,7 @@ def require(
             action=permission_code,
             resource=resource,
             allowed_interfaces=allowed_interfaces,
+            module_code=module_code,
         )
 
         if not allowed:
@@ -261,5 +334,47 @@ def require(
 
     if allowed_interfaces:
         setattr(_permission_dependency, "__allowed_interfaces__", set(allowed_interfaces))
+    if module_code:
+        setattr(_permission_dependency, "__module_code__", module_code)
     setattr(_permission_dependency, "__permission_code__", permission_code)
     return _permission_dependency
+
+
+def require_module(
+    module_code: str,
+    allowed_interfaces: Optional[Tuple[str, ...]] = None,
+) -> Callable:
+    """FastAPI dependency enforcing that a module is active and enabled."""
+
+    async def _module_dependency(
+        user: AuthenticatedUser = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ) -> AuthenticatedUser:
+        allowed, reason = await can(
+            db=db,
+            user=user,
+            action="module.access",
+            allowed_interfaces=allowed_interfaces,
+            module_code=module_code,
+        )
+
+        if not allowed:
+            logger.warning(
+                f"[MODULE DENIED] user={user.user_id} module={module_code} reason={reason}"
+            )
+            record_audit_event(
+                actor=str(user.user_id),
+                action=f"module.{module_code}.access",
+                resource="registry",
+                outcome="deny",
+                reason=reason,
+                request_id=getattr(user.session, "request_id", ""),
+            )
+            raise ForbiddenError(reason, code="FORBIDDEN")
+
+        return user
+
+    setattr(_module_dependency, "__module_code__", module_code)
+    if allowed_interfaces:
+        setattr(_module_dependency, "__allowed_interfaces__", set(allowed_interfaces))
+    return _module_dependency

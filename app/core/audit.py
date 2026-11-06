@@ -21,13 +21,15 @@ def record_audit_event(
     resource: str,
     reason: str = "",
     request_id: str = "",
+    outcome: str = "success",
 ) -> None:
     """Record an audit trail event."""
     audit_logger.info(
-        "AUDIT: actor=%s action=%s resource=%s reason=%s request_id=%s",
+        "AUDIT: actor=%s action=%s resource=%s reason=%s outcome=%s request_id=%s",
         actor,
         action,
         resource,
         reason,
+        outcome,
         request_id,
     )

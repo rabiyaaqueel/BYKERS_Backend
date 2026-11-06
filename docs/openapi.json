@@ -284,10 +284,1017 @@
           }
         }
       }
+    },
+    "/api/v1/me/workspaces": {
+      "get": {
+        "tags": [
+          "Workspaces & Permissions"
+        ],
+        "summary": "List caller's approved workspaces",
+        "description": "Returns all active workspaces the rider is authorized for.",
+        "operationId": "api_list_workspaces_api_v1_me_workspaces_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List Workspaces Api V1 Me Workspaces Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/active-workspace": {
+      "post": {
+        "tags": [
+          "Workspaces & Permissions"
+        ],
+        "summary": "Switch active workspace",
+        "description": "Validates workspace access, updates active session context, returns capabilities.",
+        "operationId": "api_switch_active_workspace_api_v1_me_active_workspace_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActiveWorkspaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveWorkspaceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/capabilities": {
+      "get": {
+        "tags": [
+          "Workspaces & Permissions"
+        ],
+        "summary": "Get active capabilities and permissions",
+        "description": "Returns UI modules and authorized action codes. Contains no secrets.",
+        "operationId": "api_get_capabilities_api_v1_me_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/applications": {
+      "post": {
+        "tags": [
+          "Applications & Review"
+        ],
+        "summary": "Submit an application",
+        "description": "Allows riders to submit an application to start a club or become an organizer.",
+        "operationId": "api_create_application_api_v1_applications_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationCreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/mine": {
+      "get": {
+        "tags": [
+          "Applications & Review"
+        ],
+        "summary": "List caller's submitted applications",
+        "description": "Returns all applications submitted by the authenticated rider.",
+        "operationId": "api_list_my_applications_api_v1_applications_mine_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List My Applications Api V1 Applications Mine Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/applications/{id}/decision": {
+      "post": {
+        "tags": [
+          "Applications & Review"
+        ],
+        "summary": "Review and decide on an application",
+        "description": "Approves or rejects application with Maker-Checker protection.",
+        "operationId": "api_decide_application_api_v1_applications__id__decision_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Application ID",
+              "title": "Id"
+            },
+            "description": "Application ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationDecisionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationDecisionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{id}/invitations": {
+      "post": {
+        "tags": [
+          "Organizations & Members"
+        ],
+        "summary": "Create role invitation",
+        "description": "Issues a secure, 48-hour time-limited token inviting a user to a specific role.",
+        "operationId": "api_create_invitation_api_v1_organizations__id__invitations_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleInvitationCreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleInvitationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organizations/{id}/members/{user_id}": {
+      "patch": {
+        "tags": [
+          "Organizations & Members"
+        ],
+        "summary": "Update organization member status",
+        "description": "Modifies a member's status with optimistic lock version checking.",
+        "operationId": "api_update_member_status_api_v1_organizations__id__members__user_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Target User ID",
+              "title": "User Id"
+            },
+            "description": "Target User ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Organizations & Members"
+        ],
+        "summary": "Revoke member role",
+        "description": "Revokes membership. The revocation takes effect on user's next request.",
+        "operationId": "api_revoke_member_api_v1_organizations__id__members__user_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization ID",
+              "title": "Id"
+            },
+            "description": "Organization ID"
+          },
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Target User ID",
+              "title": "User Id"
+            },
+            "description": "Target User ID"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/invitations/{token}/accept": {
+      "post": {
+        "tags": [
+          "Invitations"
+        ],
+        "summary": "Accept an invitation",
+        "description": "Accepts an unexpired role invitation, granting membership in the organization.",
+        "operationId": "api_accept_invitation_api_v1_invitations__token__accept_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Raw invitation token",
+              "title": "Token"
+            },
+            "description": "Raw invitation token"
+          },
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationAcceptOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit-events": {
+      "get": {
+        "tags": [
+          "Platform Administration"
+        ],
+        "summary": "List immutable audit events",
+        "description": "Returns compliance audit log entries. Requires audit.read permission.",
+        "operationId": "api_list_audit_events_api_v1_admin_audit_events_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEventOut"
+                  },
+                  "title": "Response Api List Audit Events Api V1 Admin Audit Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dev/make-admin": {
+      "post": {
+        "tags": [
+          "Development Helpers"
+        ],
+        "summary": "Promote user to platform admin (Dev Only)",
+        "description": "Promotes a test user to Platform Admin (RL13). Disabled outside dev environment.",
+        "operationId": "api_dev_make_admin_api_v1_dev_make_admin_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-request-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevMakeAdminIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevMakeAdminOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ActiveWorkspaceIn": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id",
+            "description": "Target workspace ID to activate",
+            "examples": [
+              "191a823e-0000-0000-0000-000000000000"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id"
+        ],
+        "title": "ActiveWorkspaceIn",
+        "description": "Select active workspace payload."
+      },
+      "ActiveWorkspaceOut": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id"
+          },
+          "workspace_type": {
+            "type": "string",
+            "title": "Workspace Type"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "role_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Role Codes"
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilities"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Active workspace successfully updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "workspace_type",
+          "organization_id",
+          "role_codes",
+          "capabilities"
+        ],
+        "title": "ActiveWorkspaceOut",
+        "description": "Result of active workspace switch."
+      },
+      "ApplicationCreateIn": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind of application (club, organizer, tour_operator, partner, instructor)",
+            "examples": [
+              "club"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150,
+            "minLength": 2,
+            "title": "Name",
+            "description": "Organization or club name",
+            "examples": [
+              "Hyderabad Riders Club"
+            ]
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City",
+            "description": "Base city",
+            "default": "Hyderabad",
+            "examples": [
+              "Hyderabad"
+            ]
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details",
+            "description": "Application specific metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "name"
+        ],
+        "title": "ApplicationCreateIn",
+        "description": "Official application payload."
+      },
+      "ApplicationDecisionIn": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "pattern": "^(approved|rejected|changes_requested)$",
+            "title": "Decision",
+            "description": "Decision: approved, rejected, or changes_requested",
+            "examples": [
+              "approved"
+            ]
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Review feedback or rationale",
+            "examples": [
+              "Approved verified motorcycle club"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "ApplicationDecisionIn",
+        "description": "Review decision payload."
+      },
+      "ApplicationDecisionOut": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "membership_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Membership Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id",
+          "status",
+          "message"
+        ],
+        "title": "ApplicationDecisionOut",
+        "description": "Result of application decision."
+      },
+      "ApplicationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "applicant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Applicant Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "reviewer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Id"
+          },
+          "reviewer_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "applicant_id",
+          "kind",
+          "status",
+          "payload",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ApplicationOut",
+        "description": "Application entity view."
+      },
+      "AuditEventOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "actor_id": {
+            "type": "string",
+            "title": "Actor Id"
+          },
+          "active_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Active Context"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "actor_id",
+          "active_context",
+          "target",
+          "action",
+          "outcome",
+          "request_id",
+          "occurred_at"
+        ],
+        "title": "AuditEventOut",
+        "description": "Audit log entry."
+      },
       "AuthTokenOut": {
         "properties": {
           "access_token": {
@@ -332,6 +1339,110 @@
         ],
         "title": "AuthTokenOut",
         "description": "Token response on successful login or refresh."
+      },
+      "CapabilitiesOut": {
+        "properties": {
+          "workspace_type": {
+            "type": "string",
+            "title": "Workspace Type"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "role_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Role Codes"
+          },
+          "enabled_module_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Enabled Module Ids"
+          },
+          "actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Actions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_type",
+          "role_codes",
+          "enabled_module_ids",
+          "actions"
+        ],
+        "title": "CapabilitiesOut",
+        "description": "Filtered capabilities and menu items for client UI."
+      },
+      "DevMakeAdminIn": {
+        "properties": {
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id",
+            "description": "Target user ID (defaults to caller)"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code",
+            "description": "RL13 (Platform Admin) or RL14 (Super Admin)",
+            "default": "RL13",
+            "examples": [
+              "RL13"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "DevMakeAdminIn",
+        "description": "Dev helper payload to grant platform admin rights to a test account."
+      },
+      "DevMakeAdminOut": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Test account promoted successfully to platform admin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "role_code"
+        ],
+        "title": "DevMakeAdminOut",
+        "description": "Result of dev make-admin promotion."
       },
       "DeviceIn": {
         "properties": {
@@ -419,6 +1530,42 @@
         "title": "HealthResponse",
         "description": "Health check response payload."
       },
+      "InvitationAcceptOut": {
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "organization_name": {
+            "type": "string",
+            "title": "Organization Name"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "membership_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Membership Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Invitation accepted successfully"
+          }
+        },
+        "type": "object",
+        "required": [
+          "organization_id",
+          "organization_name",
+          "role_code",
+          "membership_id"
+        ],
+        "title": "InvitationAcceptOut",
+        "description": "Result of invitation acceptance."
+      },
       "LogoutOut": {
         "properties": {
           "message": {
@@ -431,6 +1578,76 @@
         "type": "object",
         "title": "LogoutOut",
         "description": "Logout confirmation payload."
+      },
+      "MemberOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "organization_id",
+          "role_code",
+          "status",
+          "version"
+        ],
+        "title": "MemberOut",
+        "description": "Organization membership view."
+      },
+      "MemberUpdateIn": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "pattern": "^(active|suspended|revoked)$",
+            "title": "Status",
+            "description": "Updated status: active, suspended, or revoked",
+            "examples": [
+              "suspended"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "Optimistic locking version check",
+            "examples": [
+              1
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version"
+        ],
+        "title": "MemberUpdateIn",
+        "description": "Update organization member status."
       },
       "OTPRequestIn": {
         "properties": {
@@ -549,6 +1766,108 @@
         "title": "RefreshTokenIn",
         "description": "Refresh token payload."
       },
+      "RoleInvitationCreateIn": {
+        "properties": {
+          "role_code": {
+            "type": "string",
+            "title": "Role Code",
+            "description": "Role to assign (e.g. RL03 for Club Moderator, RL04 for Captain)",
+            "examples": [
+              "RL03"
+            ]
+          },
+          "recipient_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient User Id",
+            "description": "Specific recipient user ID"
+          },
+          "recipient_contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Contact",
+            "description": "Recipient phone or email",
+            "examples": [
+              "+919876543210"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_code"
+        ],
+        "title": "RoleInvitationCreateIn",
+        "description": "Create role invitation payload."
+      },
+      "RoleInvitationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "role_code": {
+            "type": "string",
+            "title": "Role Code"
+          },
+          "recipient_contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Contact"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "invitation_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invitation Token",
+            "description": "Raw token to share with recipient (shown only once)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "organization_id",
+          "role_code",
+          "recipient_contact",
+          "expires_at"
+        ],
+        "title": "RoleInvitationOut",
+        "description": "Created role invitation details."
+      },
       "SessionOut": {
         "properties": {
           "id": {
@@ -635,6 +1954,102 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WorkspaceOut": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id",
+            "description": "Rider user identifier"
+          },
+          "account_status": {
+            "type": "string",
+            "title": "Account Status",
+            "description": "Account lifecycle status"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id",
+            "description": "Workspace identifier (user id or organization id)"
+          },
+          "workspace_type": {
+            "type": "string",
+            "title": "Workspace Type",
+            "description": "Type of workspace: personal, club, business, staff"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id",
+            "description": "Linked organization ID if applicable"
+          },
+          "organization_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Name",
+            "description": "Display name of the organization"
+          },
+          "role_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Role Codes",
+            "description": "Active role codes in this workspace"
+          },
+          "permission_version": {
+            "type": "integer",
+            "title": "Permission Version",
+            "description": "Active permission version sequence",
+            "default": 1
+          },
+          "authentication_assurance": {
+            "type": "string",
+            "title": "Authentication Assurance",
+            "description": "Assurance tier",
+            "default": "otp_verified"
+          },
+          "enabled_module_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Enabled Module Ids",
+            "description": "List of platform modules available in this workspace"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "True if this is the currently active workspace",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "account_status",
+          "workspace_id",
+          "workspace_type",
+          "role_codes",
+          "enabled_module_ids"
+        ],
+        "title": "WorkspaceOut",
+        "description": "User approved workspace view."
       }
     },
     "securitySchemes": {

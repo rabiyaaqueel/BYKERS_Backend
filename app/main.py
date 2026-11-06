@@ -28,6 +28,14 @@ from app.core.errors import (
 )
 from app.core.logging import setup_logging
 from app.modules.auth.router import auth_router, me_router
+from app.modules.authz.router import (
+    admin_router,
+    applications_router,
+    authz_router,
+    dev_router,
+    invitations_router,
+    orgs_router,
+)
 from app.modules.health.router import router as health_router
 
 
@@ -120,6 +128,13 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(me_router, prefix="/api/v1")
+    app.include_router(authz_router, prefix="/api/v1")
+    app.include_router(applications_router, prefix="/api/v1")
+    app.include_router(orgs_router, prefix="/api/v1")
+    app.include_router(invitations_router, prefix="/api/v1")
+    app.include_router(admin_router, prefix="/api/v1")
+    if settings.ENV in ("dev", "test"):
+        app.include_router(dev_router, prefix="/api/v1")
 
     return app
 

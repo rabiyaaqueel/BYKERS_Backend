@@ -126,7 +126,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker Image (No Push on PR)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile

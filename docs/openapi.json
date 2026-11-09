@@ -209,7 +209,7 @@
           "Current User & Devices"
         ],
         "summary": "Get Account Summary",
-        "description": "Returns minimal account summary (id, status, onboarding_required, locale).",
+        "description": "Returns comprehensive account summary, profile, onboarding status, and consents.",
         "operationId": "api_get_me_api_v1_me_get",
         "responses": {
           "200": {
@@ -217,7 +217,52 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MeSummaryOut"
+                  "$ref": "#/components/schemas/ExtendedMeOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Update Own Profile",
+        "description": "Allows authenticated riders to edit their display name, bio, experience, visibility, and private details.",
+        "operationId": "api_patch_profile_api_v1_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfilePatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtendedMeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -295,6 +340,1368 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Api Revoke Session Api V1 Me Sessions  Session Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/account-setup": {
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Complete Rider Account Setup",
+        "description": "Validates adult declaration, checks legal notices, saves consents, and initializes rider profile.",
+        "operationId": "api_account_setup_api_v1_me_account_setup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountSetupIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtendedMeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/accept-notices": {
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Accept Updated Legal Notices",
+        "description": "Records consent when Terms of Service or Privacy Policy notice versions change.",
+        "operationId": "api_accept_notices_api_v1_me_accept_notices_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptNoticesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtendedMeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/profile-preview": {
+      "get": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Preview Own Public Profile",
+        "description": "Returns the profile exactly as visible to other riders.",
+        "operationId": "api_profile_preview_api_v1_me_profile_preview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/consents": {
+      "get": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Get Consent History",
+        "description": "Returns the complete append-only history of consent events for the caller.",
+        "operationId": "api_get_consents_api_v1_me_consents_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentEventOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api Get Consents Api V1 Me Consents Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Update Consent Preference",
+        "description": "Grants or withdraws consent for specific purposes (marketing, location, etc.). Appends immediately.",
+        "operationId": "api_update_consent_api_v1_me_consents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentEventOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/photo/upload-intent": {
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Request Avatar Upload Intent",
+        "description": "Validates image MIME type and file size (max 5 MB) and returns signed storage upload URL.",
+        "operationId": "api_photo_upload_intent_api_v1_me_photo_upload_intent_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoUploadIntentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoUploadIntentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/photo/complete": {
+      "post": {
+        "tags": [
+          "Rider Profile & Consents"
+        ],
+        "summary": "Complete Avatar Upload",
+        "description": "Validates ownership and scan state of the uploaded photo and links it to rider profile.",
+        "operationId": "api_photo_complete_api_v1_me_photo_complete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoCompleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoCompleteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/bikes": {
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Add a Motorcycle",
+        "description": "M03 - Motorcycle Garage. Rider app only. Supports Idempotency-Key. Encrypts registration at rest.",
+        "operationId": "api_create_bike_api_v1_me_bikes_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BikeCreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BikeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M03"
+      },
+      "get": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "List Garage Motorcycles",
+        "description": "M03 - Motorcycle Garage. Rider app only. Active first (preferred first), then archived if include_archived=true.",
+        "operationId": "api_list_bikes_api_v1_me_bikes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include archived motorcycles in list",
+              "default": false,
+              "title": "Include Archived"
+            },
+            "description": "Include archived motorcycles in list"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BikeOut"
+                  },
+                  "title": "Response Api List Bikes Api V1 Me Bikes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M03"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}": {
+      "get": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Get Motorcycle Details",
+        "description": "M03 - Motorcycle Garage. Rider app only. Returns 404 for bikes owned by other riders.",
+        "operationId": "api_get_bike_api_v1_me_bikes__bike_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BikeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M03"
+      },
+      "patch": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Update Motorcycle Details",
+        "description": "M03 - Motorcycle Garage. Requires version for optimistic concurrency (409 on mismatch).",
+        "operationId": "api_patch_bike_api_v1_me_bikes__bike_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BikePatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BikeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M03"
+      },
+      "delete": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Archive Motorcycle",
+        "description": "M03 - Motorcycle Garage. Archives bike (retains history). Promotes most recent active bike if preferred.",
+        "operationId": "api_archive_bike_api_v1_me_bikes__bike_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Api Archive Bike Api V1 Me Bikes  Bike Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M03"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}/preferred": {
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Set Preferred Motorcycle",
+        "description": "M03 - Motorcycle Garage. Atomically switches active preferred motorcycle for rider.",
+        "operationId": "api_set_preferred_api_v1_me_bikes__bike_id__preferred_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BikeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M03"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}/photos/upload-intent": {
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Request Bike Photo Upload Intent",
+        "description": "M03 - Motorcycle Garage. Validates JPEG/PNG/WebP, up to 5 MB, maximum 5 photos per bike.",
+        "operationId": "api_bike_photo_intent_api_v1_me_bikes__bike_id__photos_upload_intent_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BikePhotoUploadIntentIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BikePhotoUploadIntentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M03"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}/photos/complete": {
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Complete Bike Photo Upload",
+        "description": "M03 - Motorcycle Garage. Unavailable until safety scan state is clean.",
+        "operationId": "api_complete_bike_photo_api_v1_me_bikes__bike_id__photos_complete_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BikePhotoCompleteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BikeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M03"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}/maintenance": {
+      "get": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "List Maintenance Records",
+        "description": "M21 - Maintenance & Service Reminders. Rider app only.",
+        "operationId": "api_list_maintenance_api_v1_me_bikes__bike_id__maintenance_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaintenanceRecordOut"
+                  },
+                  "title": "Response Api List Maintenance Api V1 Me Bikes  Bike Id  Maintenance Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M21"
+      },
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Add Maintenance Record",
+        "description": "M21 - Maintenance & Service Reminders. Updates bike odometer if new reading is higher.",
+        "operationId": "api_create_maintenance_api_v1_me_bikes__bike_id__maintenance_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaintenanceRecordIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceRecordOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M21"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}/maintenance/upload-intent": {
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Request Maintenance Invoice Upload Intent",
+        "description": "M21 - Maintenance & Service Reminders. Signed upload URL for invoice PDF or image.",
+        "operationId": "api_maintenance_file_intent_api_v1_me_bikes__bike_id__maintenance_upload_intent_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaUploadIntentIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaUploadIntentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M21"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}/maintenance/upload-complete": {
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Complete Maintenance Invoice Upload",
+        "description": "M21 - Maintenance & Service Reminders.",
+        "operationId": "api_maintenance_file_complete_api_v1_me_bikes__bike_id__maintenance_upload_complete_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaCompleteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Api Maintenance File Complete Api V1 Me Bikes  Bike Id  Maintenance Upload Complete Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M21"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}/documents": {
+      "get": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "List Bike Documents",
+        "description": "M21 - Maintenance & Service Reminders. Private access with short-lived download URLs.",
+        "operationId": "api_list_documents_api_v1_me_bikes__bike_id__documents_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BikeDocumentOut"
+                  },
+                  "title": "Response Api List Documents Api V1 Me Bikes  Bike Id  Documents Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M21"
+      },
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Add Bike Document",
+        "description": "M21 - Maintenance & Service Reminders. Records legal document with short-lived signed access.",
+        "operationId": "api_create_document_api_v1_me_bikes__bike_id__documents_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BikeDocumentIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BikeDocumentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M21"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}/documents/upload-intent": {
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Request Bike Document Upload Intent",
+        "description": "M21 - Maintenance & Service Reminders. Signed upload URL for legal document.",
+        "operationId": "api_document_file_intent_api_v1_me_bikes__bike_id__documents_upload_intent_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaUploadIntentIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaUploadIntentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M21"
+      }
+    },
+    "/api/v1/me/bikes/{bike_id}/documents/upload-complete": {
+      "post": {
+        "tags": [
+          "Motorcycle Garage (M03 & M21)"
+        ],
+        "summary": "Complete Bike Document Upload",
+        "description": "M21 - Maintenance & Service Reminders.",
+        "operationId": "api_document_file_complete_api_v1_me_bikes__bike_id__documents_upload_complete_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bike_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Bike Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaCompleteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Api Document File Complete Api V1 Me Bikes  Bike Id  Documents Upload Complete Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "module_code": "M21"
+      }
+    },
+    "/api/v1/meta/cities": {
+      "get": {
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "List Supported Cities",
+        "description": "Returns active motorcycle hub cities. Requires rider login.",
+        "operationId": "api_list_cities_api_v1_meta_cities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CityOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List Cities Api V1 Meta Cities Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/meta/interests": {
+      "get": {
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "List Rider Interests",
+        "description": "Returns available riding interests with English, Telugu, and Hindi translations.",
+        "operationId": "api_list_interests_api_v1_meta_interests_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InterestOut"
+                  },
+                  "type": "array",
+                  "title": "Response Api List Interests Api V1 Meta Interests Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notices/current": {
+      "get": {
+        "tags": [
+          "Legal Notices"
+        ],
+        "summary": "Get Current Legal Notices",
+        "description": "Public endpoint returning current active versions of Terms and Privacy Policy.",
+        "operationId": "api_get_current_notices_api_v1_notices_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeCurrentOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notices/current": {
+      "get": {
+        "tags": [
+          "Legal Notices"
+        ],
+        "summary": "Get Current Legal Notices",
+        "description": "Public endpoint returning current active versions of Terms and Privacy Policy.",
+        "operationId": "api_get_current_notices_notices_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeCurrentOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profiles/{user_id}": {
+      "get": {
+        "tags": [
+          "Profiles"
+        ],
+        "summary": "View Rider Public Profile",
+        "description": "Returns public profile fields respecting visibility. NEVER returns legal name, email, or phone.",
+        "operationId": "api_get_public_profile_api_v1_profiles__user_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileOut"
                 }
               }
             }
@@ -1565,6 +2972,94 @@
   },
   "components": {
     "schemas": {
+      "AcceptNoticesIn": {
+        "properties": {
+          "accepted_terms_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted Terms Version"
+          },
+          "accepted_privacy_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted Privacy Version"
+          }
+        },
+        "type": "object",
+        "title": "AcceptNoticesIn"
+      },
+      "AccountSetupIn": {
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Display Name"
+          },
+          "city_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City Id"
+          },
+          "locale": {
+            "type": "string",
+            "maxLength": 10,
+            "title": "Locale",
+            "default": "en"
+          },
+          "adult_declaration": {
+            "type": "boolean",
+            "title": "Adult Declaration"
+          },
+          "accepted_terms_version": {
+            "type": "string",
+            "title": "Accepted Terms Version"
+          },
+          "accepted_privacy_version": {
+            "type": "string",
+            "title": "Accepted Privacy Version"
+          },
+          "marketing_consent": {
+            "type": "boolean",
+            "title": "Marketing Consent",
+            "default": false
+          },
+          "interests": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Interests"
+          }
+        },
+        "type": "object",
+        "required": [
+          "display_name",
+          "adult_declaration",
+          "accepted_terms_version",
+          "accepted_privacy_version"
+        ],
+        "title": "AccountSetupIn"
+      },
       "ActiveWorkspaceIn": {
         "properties": {
           "workspace_id": {
@@ -1952,6 +3447,516 @@
         "title": "AuthTokenOut",
         "description": "Token response on successful login or refresh."
       },
+      "BikeCreateIn": {
+        "properties": {
+          "make": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Make"
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Model"
+          },
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "powertrain": {
+            "type": "string",
+            "title": "Powertrain",
+            "default": "petrol"
+          },
+          "nickname": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nickname"
+          },
+          "odometer_km": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Odometer Km"
+          },
+          "registration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration"
+          }
+        },
+        "type": "object",
+        "required": [
+          "make",
+          "model",
+          "year"
+        ],
+        "title": "BikeCreateIn",
+        "description": "Motorcycle creation payload matching the 'Add a motorcycle' screen."
+      },
+      "BikeDocumentIn": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "examples": [
+              "insurance",
+              "registration",
+              "pollution",
+              "licence"
+            ]
+          },
+          "expires_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires On"
+          },
+          "private_media_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Private Media Id"
+          },
+          "sharing_policy": {
+            "type": "string",
+            "title": "Sharing Policy",
+            "default": "private"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "private_media_id"
+        ],
+        "title": "BikeDocumentIn",
+        "description": "Upload or record motorcycle legal documentation."
+      },
+      "BikeDocumentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "bike_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Bike Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "expires_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires On"
+          },
+          "private_media_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Private Media Id"
+          },
+          "download_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Download Url"
+          },
+          "sharing_policy": {
+            "type": "string",
+            "title": "Sharing Policy"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "bike_id",
+          "type",
+          "private_media_id",
+          "sharing_policy",
+          "created_at"
+        ],
+        "title": "BikeDocumentOut"
+      },
+      "BikeOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "make": {
+            "type": "string",
+            "title": "Make"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "powertrain": {
+            "type": "string",
+            "title": "Powertrain"
+          },
+          "nickname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nickname"
+          },
+          "odometer_km": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Odometer Km"
+          },
+          "registration_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Masked"
+          },
+          "is_preferred": {
+            "type": "boolean",
+            "title": "Is Preferred"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/BikePhotoOut"
+            },
+            "type": "array",
+            "title": "Photos"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "make",
+          "model",
+          "year",
+          "powertrain",
+          "is_preferred",
+          "created_at",
+          "version"
+        ],
+        "title": "BikeOut",
+        "description": "Public/private motorcycle response with masked registration."
+      },
+      "BikePatchIn": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "Current version of the motorcycle record for concurrency check"
+          },
+          "make": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Make"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "powertrain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Powertrain"
+          },
+          "nickname": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nickname"
+          },
+          "odometer_km": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Odometer Km"
+          },
+          "registration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "title": "BikePatchIn",
+        "description": "Motorcycle update payload with optimistic concurrency version."
+      },
+      "BikePhotoCompleteIn": {
+        "properties": {
+          "media_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Id"
+          },
+          "display_order": {
+            "type": "integer",
+            "maximum": 4.0,
+            "minimum": 0.0,
+            "title": "Display Order",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_id"
+        ],
+        "title": "BikePhotoCompleteIn"
+      },
+      "BikePhotoOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "media_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Id"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "media_id",
+          "display_order"
+        ],
+        "title": "BikePhotoOut",
+        "description": "Photo item attached to a motorcycle."
+      },
+      "BikePhotoUploadIntentIn": {
+        "properties": {
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "examples": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          },
+          "byte_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Byte Size"
+          },
+          "bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bytes"
+          },
+          "display_order": {
+            "type": "integer",
+            "maximum": 4.0,
+            "minimum": 0.0,
+            "title": "Display Order",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "mime_type"
+        ],
+        "title": "BikePhotoUploadIntentIn",
+        "description": "Request signed upload URL for a bike avatar photo."
+      },
+      "BikePhotoUploadIntentOut": {
+        "properties": {
+          "media_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Id"
+          },
+          "upload_url": {
+            "type": "string",
+            "title": "Upload Url"
+          },
+          "object_key": {
+            "type": "string",
+            "title": "Object Key"
+          },
+          "expires_in_seconds": {
+            "type": "integer",
+            "title": "Expires In Seconds",
+            "default": 900
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_id",
+          "upload_url",
+          "object_key"
+        ],
+        "title": "BikePhotoUploadIntentOut"
+      },
       "CapabilitiesOut": {
         "properties": {
           "workspace_type": {
@@ -2001,6 +4006,99 @@
         ],
         "title": "CapabilitiesOut",
         "description": "Filtered capabilities and menu items for client UI."
+      },
+      "CityOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "state",
+          "country",
+          "active"
+        ],
+        "title": "CityOut"
+      },
+      "ConsentEventOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "notice_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice Version"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "purpose",
+          "action",
+          "occurred_at"
+        ],
+        "title": "ConsentEventOut"
+      },
+      "ConsentUpdateIn": {
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "purpose",
+          "action"
+        ],
+        "title": "ConsentUpdateIn"
       },
       "DevMakeAdminIn": {
         "properties": {
@@ -2096,6 +4194,84 @@
         "title": "DeviceIn",
         "description": "Client device information."
       },
+      "ExtendedMeOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "phone_masked": {
+            "type": "string",
+            "title": "Phone Masked"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "onboarding_required": {
+            "type": "boolean",
+            "title": "Onboarding Required"
+          },
+          "account_setup_completed": {
+            "type": "boolean",
+            "title": "Account Setup Completed"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicProfileOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "private_details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrivateDetailsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "consents": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Consents"
+          },
+          "verified_badges": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Verified Badges"
+          },
+          "profile_completeness": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Profile Completeness"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "phone_masked",
+          "status",
+          "onboarding_required",
+          "account_setup_completed",
+          "locale"
+        ],
+        "title": "ExtendedMeOut"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2141,6 +4317,40 @@
         ],
         "title": "HealthResponse",
         "description": "Health check response payload."
+      },
+      "InterestOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En"
+          },
+          "name_te": {
+            "type": "string",
+            "title": "Name Te"
+          },
+          "name_hi": {
+            "type": "string",
+            "title": "Name Hi"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name_en",
+          "name_te",
+          "name_hi"
+        ],
+        "title": "InterestOut"
       },
       "InterfaceModuleOut": {
         "properties": {
@@ -2266,39 +4476,274 @@
         "title": "LogoutOut",
         "description": "Logout confirmation payload."
       },
-      "MeSummaryOut": {
+      "MaintenanceRecordIn": {
+        "properties": {
+          "service_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Service Date"
+          },
+          "odometer_km": {
+            "type": "integer",
+            "maximum": 999999.0,
+            "minimum": 0.0,
+            "title": "Odometer Km"
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Category"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "invoice_media_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Media Id"
+          },
+          "odometer_source": {
+            "type": "string",
+            "title": "Odometer Source",
+            "default": "manual"
+          },
+          "next_due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Due Date"
+          },
+          "next_due_km": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 999999.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Due Km"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service_date",
+          "odometer_km",
+          "category"
+        ],
+        "title": "MaintenanceRecordIn",
+        "description": "New service maintenance log entry."
+      },
+      "MaintenanceRecordOut": {
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id",
-            "description": "User unique identifier"
+            "title": "Id"
           },
-          "status": {
+          "bike_id": {
             "type": "string",
-            "title": "Status",
-            "description": "Account lifecycle status"
+            "format": "uuid",
+            "title": "Bike Id"
           },
-          "onboarding_required": {
-            "type": "boolean",
-            "title": "Onboarding Required",
-            "description": "True if rider onboarding is pending"
-          },
-          "locale": {
+          "service_date": {
             "type": "string",
-            "title": "Locale",
-            "description": "User preferred locale",
-            "default": "en-IN"
+            "format": "date-time",
+            "title": "Service Date"
+          },
+          "odometer_km": {
+            "type": "integer",
+            "title": "Odometer Km"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "invoice_media_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Media Id"
+          },
+          "invoice_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Url"
+          },
+          "odometer_source": {
+            "type": "string",
+            "title": "Odometer Source"
+          },
+          "next_due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Due Date"
+          },
+          "next_due_km": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Due Km"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "status",
-          "onboarding_required"
+          "bike_id",
+          "service_date",
+          "odometer_km",
+          "category",
+          "odometer_source",
+          "created_at"
         ],
-        "title": "MeSummaryOut",
-        "description": "Minimal account summary view for the authenticated caller (Rule 6)."
+        "title": "MaintenanceRecordOut"
+      },
+      "MediaCompleteIn": {
+        "properties": {
+          "media_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_id"
+        ],
+        "title": "MediaCompleteIn"
+      },
+      "MediaUploadIntentIn": {
+        "properties": {
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "examples": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png"
+            ]
+          },
+          "byte_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Byte Size"
+          },
+          "bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mime_type"
+        ],
+        "title": "MediaUploadIntentIn"
+      },
+      "MediaUploadIntentOut": {
+        "properties": {
+          "media_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Id"
+          },
+          "upload_url": {
+            "type": "string",
+            "title": "Upload Url"
+          },
+          "object_key": {
+            "type": "string",
+            "title": "Object Key"
+          },
+          "expires_in_seconds": {
+            "type": "integer",
+            "title": "Expires In Seconds",
+            "default": 900
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_id",
+          "upload_url",
+          "object_key"
+        ],
+        "title": "MediaUploadIntentOut"
       },
       "MemberOut": {
         "properties": {
@@ -2440,6 +4885,61 @@
         ],
         "title": "MenuResponse",
         "description": "Menu navigation response for the active session and workspace."
+      },
+      "NoticeCurrentOut": {
+        "properties": {
+          "terms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoticeVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoticeVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "NoticeCurrentOut"
+      },
+      "NoticeVersionOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Published At"
+          },
+          "text_url": {
+            "type": "string",
+            "title": "Text Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "version",
+          "published_at",
+          "text_url"
+        ],
+        "title": "NoticeVersionOut"
       },
       "OTPRequestIn": {
         "properties": {
@@ -2637,6 +5137,341 @@
         ],
         "title": "OrganizationModuleToggleIn",
         "description": "Payload to toggle modules for an organization."
+      },
+      "PhotoCompleteIn": {
+        "properties": {
+          "media_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Asset Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_asset_id"
+        ],
+        "title": "PhotoCompleteIn"
+      },
+      "PhotoCompleteOut": {
+        "properties": {
+          "media_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Asset Id"
+          },
+          "scan_state": {
+            "type": "string",
+            "title": "Scan State"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_asset_id",
+          "scan_state"
+        ],
+        "title": "PhotoCompleteOut"
+      },
+      "PhotoUploadIntentIn": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "mime_type",
+          "bytes"
+        ],
+        "title": "PhotoUploadIntentIn"
+      },
+      "PhotoUploadIntentOut": {
+        "properties": {
+          "media_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Media Asset Id"
+          },
+          "upload_url": {
+            "type": "string",
+            "title": "Upload Url"
+          },
+          "object_key": {
+            "type": "string",
+            "title": "Object Key"
+          },
+          "expires_in_seconds": {
+            "type": "integer",
+            "title": "Expires In Seconds",
+            "default": 900
+          }
+        },
+        "type": "object",
+        "required": [
+          "media_asset_id",
+          "upload_url",
+          "object_key"
+        ],
+        "title": "PhotoUploadIntentOut"
+      },
+      "PrivateDetailsOut": {
+        "properties": {
+          "legal_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "title": "PrivateDetailsOut"
+      },
+      "ProfilePatchIn": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "bio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bio"
+          },
+          "home_city_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Home City Id"
+          },
+          "experience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experience"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visibility"
+          },
+          "languages": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Languages"
+          },
+          "interests": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interests"
+          },
+          "legal_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "title": "ProfilePatchIn"
+      },
+      "PublicProfileOut": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "bio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bio"
+          },
+          "experience": {
+            "type": "string",
+            "title": "Experience"
+          },
+          "visibility": {
+            "type": "string",
+            "title": "Visibility"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Languages"
+          },
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestOut"
+            },
+            "type": "array",
+            "title": "Interests"
+          },
+          "verified_badges": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Verified Badges"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "display_name",
+          "experience",
+          "visibility"
+        ],
+        "title": "PublicProfileOut"
       },
       "RefreshTokenIn": {
         "properties": {

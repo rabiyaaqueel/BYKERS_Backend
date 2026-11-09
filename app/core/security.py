@@ -8,15 +8,19 @@ This file handles cryptographic operations:
 - Phone number privacy masking
 """
 
+import base64
 import hashlib
 import hmac
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import jwt
+from cryptography.fernet import Fernet
 
 from app.core.config import settings
+from app.core.errors import ValidationError
 
 
 def hash_token(token: str) -> str:
@@ -84,3 +88,49 @@ def mask_phone(phone: str) -> str:
     prefix = clean[:3]
     suffix = clean[-4:]
     return f"{prefix}******{suffix}"
+
+
+def _get_fernet() -> Fernet:
+    """Derive deterministic 32-byte urlsafe Fernet key from application SECRET_KEY."""
+    raw_key = getattr(settings, "REGISTRATION_ENCRYPTION_KEY", None)
+    if raw_key:
+        return Fernet(raw_key.encode("utf-8") if isinstance(raw_key, str) else raw_key)
+    digest = hashlib.sha256(settings.SECRET_KEY.encode("utf-8")).digest()
+    key = base64.urlsafe_b64encode(digest)
+    return Fernet(key)
+
+
+def encrypt_registration(registration: str) -> str:
+    """Encrypts a bike registration number at rest using AES-Fernet."""
+    f = _get_fernet()
+    return f.encrypt(registration.encode("utf-8")).decode("utf-8")
+
+
+def decrypt_registration(encrypted_token: str) -> str:
+    """Decrypts a stored bike registration number."""
+    f = _get_fernet()
+    return f.decrypt(encrypted_token.encode("utf-8")).decode("utf-8")
+
+
+def mask_registration(last4: Optional[str]) -> Optional[str]:
+    """Masks bike registration number showing only the last 4 characters (e.g. ******1234)."""
+    if not last4:
+        return None
+    clean = last4.strip().upper()
+    return f"******{clean}"
+
+
+def clean_and_validate_registration(registration: str) -> Tuple[str, str]:
+    """Cleans, normalizes, and validates motorcycle registration number.
+
+    Rule: uppercase, remove spaces and hyphens, accept letters and digits only, 6 to 12 chars.
+    Returns (cleaned_registration, last4).
+    Raises ValidationError with field-level details on failure.
+    """
+    clean = re.sub(r"[\s\-]", "", registration.strip()).upper()
+    if not re.fullmatch(r"^[A-Z0-9]{6,12}$", clean):
+        raise ValidationError(
+            "Registration number must be 6 to 12 alphanumeric characters without symbols.",
+            details={"field": "registration", "rejected_value": registration},
+        )
+    return clean, clean[-4:]

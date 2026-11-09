@@ -12,7 +12,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, Set
+from typing import Any, Callable, Dict, Optional, Set
 
 import jwt
 from fastapi import Depends, Request
@@ -26,6 +26,19 @@ from app.core.db import get_db
 from app.core.errors import ForbiddenError, UnauthorizedError
 from app.core.security import decode_access_token
 from app.modules.auth.models import Session, User, UserStatus
+
+
+def get_client_ip(request: Request) -> Optional[str]:
+    """Extract client IP address from proxy headers or client connection."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else None
+
+
+def get_user_agent(request: Request) -> Optional[str]:
+    """Extract user agent header from request."""
+    return request.headers.get("user-agent")
 
 
 class AppInterface(str, Enum):

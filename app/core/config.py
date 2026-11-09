@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     # JWT signing key (Keep secret in production!)
     SECRET_KEY: str = "dev-insecure-secret-key-change-in-production-min-32-chars"
+    REGISTRATION_ENCRYPTION_KEY: Optional[str] = None
 
     # Token expiration periods
     ACCESS_TOKEN_MINUTES: int = 15
@@ -37,6 +38,15 @@ class Settings(BaseSettings):
     OTP_RESEND_SECONDS: int = 60
     OTP_MAX_ATTEMPTS: int = 5
     OTP_MAX_SENDS_PER_HOUR: int = 5
+
+    # SMS Gateway Provider Settings
+    # SMS_PROVIDER options: 'console' (dev/test logger), 'fast2sms' (India real-time OTP), 'twilio'
+    SMS_PROVIDER: str = "console"
+    FAST2SMS_API_KEY: Optional[str] = None
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    TWILIO_FROM_NUMBER: Optional[str] = None
+    SMS_FALLBACK_TO_CONSOLE: bool = True
 
     # Dev OTP testing support
     # DEV_FIXED_OTP will only work if ENV == 'dev' AND the phone is in ALLOWED_TEST_PHONES
